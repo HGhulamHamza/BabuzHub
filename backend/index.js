@@ -5,6 +5,7 @@ import { connectToDB } from "./utils/db.js";
 import signupRoute from "./api/auth/signup.js";
 import signinRoute from "./api/auth/signin.js";
 import productsRoute from "./api/auth/products.js";
+import sendOrderRoute from "./api/auth/sendOrder.js";
 
 dotenv.config();
 
@@ -15,9 +16,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // ===== CORS FIX =====
 app.use(cors({
-  origin: "http://localhost:5173", // frontend URL
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
   methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true // only if using cookies/auth
+  credentials: true,
 }));
 
 // Connect MongoDB
@@ -27,11 +28,12 @@ connectToDB();
 app.use("/api/auth/signup", signupRoute);
 app.use("/api/auth/signin", signinRoute);
 app.use("/api/products", productsRoute);
+app.use("/api/send-order", sendOrderRoute);
 
 // Test route
 app.get("/", (req, res) => {
   res.send("Backend is running...");
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// ✅ Export the app (no app.listen!)
+export default app;
