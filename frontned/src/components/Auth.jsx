@@ -12,7 +12,8 @@ function Auth({ setUser }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

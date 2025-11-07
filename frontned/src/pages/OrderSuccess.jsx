@@ -30,7 +30,7 @@ const OrderSuccess = () => {
           <h4>Total: Rs {total}</h4>
         </div>
 
-        <button onClick={() => navigate("/products")} className="continue-btn">
+        <button onClick={() => navigate("/product")} className="continue-btn">
           Continue Shopping
         </button>
       </div>

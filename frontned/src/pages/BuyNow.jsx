@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 const BuyNow = ({ cartItems, user }) => {
   const navigate = useNavigate();
   const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -37,16 +38,35 @@ const BuyNow = ({ cartItems, user }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!validateForm()) return;
 
-    navigate("/order-success", {
-      state: {
-        userDetails: formData,
-        cartItems,
-        total,
-      },
-    });
+    setLoading(true);
+    try {
+      const response = await fetch("https://babuz-hub.vercel.app/api/send-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userDetails: formData,
+          cartItems,
+          total,
+        }),
+      });
+
+      if (response.ok) {
+        alert("✅ Order placed successfully! Confirmation sent to store.");
+        navigate("/order-success", {
+          state: { userDetails: formData, cartItems, total },
+        });
+      } else {
+        alert("❌ Failed to place order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Order error:", error);
+      alert("❌ Error sending order. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!cartItems || cartItems.length === 0) {
@@ -215,8 +235,12 @@ const BuyNow = ({ cartItems, user }) => {
             </p>
           </div>
 
-          <button className="place-order-btn" onClick={handlePlaceOrder}>
-            Place Order
+          <button
+            className="place-order-btn"
+            onClick={handlePlaceOrder}
+            disabled={loading}
+          >
+            {loading ? "Placing Order..." : "Place Order"}
           </button>
         </div>
       </div>
@@ -360,6 +384,11 @@ const BuyNow = ({ cartItems, user }) => {
 
         .place-order-btn:hover {
           background: #008f8b;
+        }
+
+        .place-order-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
         }
 
         .checkout-empty {
