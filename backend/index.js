@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { connectToDB } from "./utils/db.js";
+
 import signupRoute from "./api/auth/signup.js";
 import signinRoute from "./api/auth/signin.js";
 import productsRoute from "./api/auth/products.js";
@@ -17,9 +18,13 @@ app.use(express.urlencoded({ extended: true }));
 // ===== CORS FIX =====
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:5173",
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 }));
+
+// ✅ Preflight handler for Express 5
+app.options(/.*/, cors());
 
 // Connect MongoDB
 connectToDB();
@@ -30,10 +35,8 @@ app.use("/api/auth/signin", signinRoute);
 app.use("/api/products", productsRoute);
 app.use("/api/send-order", sendOrderRoute);
 
-// Test route
 app.get("/", (req, res) => {
   res.send("Backend is running...");
 });
 
-// ✅ Export the app (no app.listen!)
 export default app;
