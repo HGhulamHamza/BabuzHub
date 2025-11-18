@@ -10,7 +10,10 @@ function SingleProduct({ user, cartItems, setCartItems }) {
   const [product, setProduct] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
 
-  const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
+
+axios.get(`${API_BASE}/api/products`)
+
 
   // ✅ Fetch product data
   useEffect(() => {
