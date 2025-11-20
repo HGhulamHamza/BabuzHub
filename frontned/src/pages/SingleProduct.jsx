@@ -9,11 +9,9 @@ function SingleProduct({ user, cartItems, setCartItems }) {
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
+  const [selectedSize, setSelectedSize] = useState("Medium"); // Default size
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL;
-
-axios.get(`${API_BASE}/api/products`)
-
+  const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
   // ✅ Fetch product data
   useEffect(() => {
@@ -34,7 +32,7 @@ axios.get(`${API_BASE}/api/products`)
   if (!product)
     return <p style={{ textAlign: "center", marginTop: "80px" }}>Loading product...</p>;
 
-  // ✅ Add to cart (with proper ID matching + localStorage sync)
+  // ✅ Add to cart
   const handleAddToCart = () => {
     const newItem = {
       id: product._id,
@@ -43,19 +41,22 @@ axios.get(`${API_BASE}/api/products`)
       price: selectedOption ? selectedOption.price : product.price,
       selectedOption: selectedOption ? { ...selectedOption } : null,
       quantity: Number(quantity),
+      selectedSize: selectedSize, // Add size to cart
     };
 
     setCartItems((prev) => {
       const exists = prev.find(
         (p) =>
           p.id === newItem.id &&
-          p.selectedOption?._id === newItem.selectedOption?._id
+          p.selectedOption?._id === newItem.selectedOption?._id &&
+          p.selectedSize === newItem.selectedSize
       );
       let updated;
       if (exists) {
         updated = prev.map((p) =>
           p.id === newItem.id &&
-          p.selectedOption?._id === newItem.selectedOption?._id
+          p.selectedOption?._id === newItem.selectedOption?._id &&
+          p.selectedSize === newItem.selectedSize
             ? { ...p, quantity: p.quantity + newItem.quantity }
             : p
         );
@@ -63,14 +64,12 @@ axios.get(`${API_BASE}/api/products`)
         updated = [...prev, newItem];
       }
 
-      // ✅ Save immediately to localStorage
       const key = user ? `cartItems_${user._id || user.email}` : "cartItems_guest";
       localStorage.setItem(key, JSON.stringify(updated));
 
       return updated;
     });
 
-    // ✅ Navigate after small delay for state sync
     setTimeout(() => navigate("/cart"), 100);
   };
 
@@ -84,6 +83,7 @@ axios.get(`${API_BASE}/api/products`)
         <div className="single-details">
           <h2>{product.title}</h2>
 
+          {/* ✅ Existing Options Buttons */}
           {product.options && product.options.length > 0 && (
             <div className="options">
               {product.options.map((opt) => (
@@ -100,9 +100,38 @@ axios.get(`${API_BASE}/api/products`)
             </div>
           )}
 
+          {/* ✅ New Dropdown ONLY for this specific product */}
+          {product.title === "Adjustable Washable Cloth Diaper + Inner" && (
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                htmlFor="size-select"
+                style={{ fontWeight: "600", marginRight: "10px" }}
+              >
+                Size:
+              </label>
+              <select
+                id="size-select"
+                value={selectedSize}
+                onChange={(e) => setSelectedSize(e.target.value)}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #ccc",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
+              >
+                <option value="Small">Small</option>
+                <option value="Medium">Medium</option>
+                <option value="Large">Large</option>
+              </select>
+            </div>
+          )}
+
           <p className="price">
             Rs {selectedOption ? selectedOption.price : product.price}
           </p>
+
           <p className="desc">{product.description}</p>
 
           <div className="quantity-box">
@@ -115,35 +144,37 @@ axios.get(`${API_BASE}/api/products`)
             </button>
           </div>
 
+          {/* ✅ Existing Add to Cart & Buy Now Buttons */}
           <div className="action-btns">
             <button className="cart-btn" onClick={handleAddToCart}>
               <FiShoppingCart /> Add to Cart
             </button>
-           <button
-  className="buy-btn"
-  onClick={() =>
-    navigate("/buy-now", {
-      state: {
-        product: {
-          id: product._id,
-          title: product.title,
-          img: product.img,
-          price: selectedOption ? selectedOption.price : product.price,
-          selectedOption: selectedOption || null,
-          quantity,
-        },
-      },
-    })
-  }
->
-  <FiCreditCard /> Buy Now
-</button>
 
+            <button
+              className="buy-btn"
+              onClick={() =>
+                navigate("/buy-now", {
+                  state: {
+                    product: {
+                      id: product._id,
+                      title: product.title,
+                      img: product.img,
+                      price: selectedOption ? selectedOption.price : product.price,
+                      selectedOption: selectedOption || null,
+                      quantity,
+                      selectedSize,
+                    },
+                  },
+                })
+              }
+            >
+              <FiCreditCard /> Buy Now
+            </button>
           </div>
         </div>
       </div>
 
-      {/* ✅ Styling */}
+      {/* ✅ Existing Styles (unchanged) */}
       <style>{`
         .single-container {
           display: flex;

@@ -73,7 +73,7 @@ const BuyNow = ({ cartItems, user }) => {
     return (
       <div className="checkout-empty">
         <h2>No items in your cart!</h2>
-        <button onClick={() => navigate("/products")}>Continue Shopping</button>
+        <button onClick={() => navigate("/product")}>Continue Shopping</button>
       </div>
     );
   }
