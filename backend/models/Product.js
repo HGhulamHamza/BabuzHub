@@ -9,8 +9,10 @@ const productSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   img: { type: String, required: true },
-  price: { type: Number, required: true }, // Add this line
-  options: [optionSchema], // For products with multiple options (like pack of 3, pack of 5)
+  images: { type: [String], default: [] },   // <-- NEW
+  price: { type: Number, required: true },
+  sizes: { type: [String], default: [] },    // <-- NEW
+  options: [optionSchema],
 });
 
 export default mongoose.model("Product", productSchema);
