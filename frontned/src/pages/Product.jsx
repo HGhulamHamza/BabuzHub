@@ -4,11 +4,10 @@ import axios from "axios";
 
 function Product() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true); // NEW
 
-  // Backend URL
   const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
-  // Fetch products from backend
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -16,6 +15,8 @@ function Product() {
         setProducts(res.data);
       } catch (err) {
         console.error("Failed to fetch products:", err);
+      } finally {
+        setLoading(false); // Stop loader
       }
     };
     fetchProducts();
@@ -25,22 +26,31 @@ function Product() {
     <>
       <div className="product-container">
         <h2 className="section-title">All Products</h2>
-        <div className="product-grid">
-          {products.map((p) => (
-            <div key={p._id} className="product-card">
-              <img
-                src={p.img} // image path from DB
-                alt={p.title}
-                className="product-img"
-              />
-              <h3 className="product-title">{p.title}</h3>
-              <p className="product-price">Rs {p.price}</p>
-              <Link to={`/product/${p._id}`}>
-                <button className="product-btn">Choose Options</button>
-              </Link>
-            </div>
-          ))}
-        </div>
+
+        {/* 🔥 Loader UI */}
+        {loading ? (
+          <div className="loader-wrapper">
+            <div className="loader"></div>
+            <p className="loader-text">Loading products...</p>
+          </div>
+        ) : (
+          <div className="product-grid">
+            {products.map((p) => (
+              <div key={p._id} className="product-card">
+                <img
+                  src={p.img}
+                  alt={p.title}
+                  className="product-img"
+                />
+                <h3 className="product-title">{p.title}</h3>
+                <p className="product-price">Rs {p.price}</p>
+                <Link to={`/product/${p._id}`}>
+                  <button className="product-btn">Choose Options</button>
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -54,8 +64,36 @@ function Product() {
         .section-title {
           font-size: 28px;
           font-weight: 700;
-          margin-bottom: 40px;
+          margin-bottom: 30px;
           color: #222;
+        }
+
+        /* 🔥 Loader Styling */
+        .loader-wrapper {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-top: 40px;
+        }
+
+        .loader {
+          width: 60px;
+          height: 60px;
+          border: 6px solid #e0f5f5;
+          border-top-color: #00a9a5;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        .loader-text {
+          margin-top: 12px;
+          color: #00a9a5;
+          font-weight: 600;
+          font-size: 16px;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
 
         .product-grid {
