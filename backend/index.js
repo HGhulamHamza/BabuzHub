@@ -15,13 +15,33 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173","https://babyzhub.com",
-      "https://www.babyzhub.com",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
-}));
+const allowedOrigins = [
+  "https://babyzhub.com",
+  "https://www.babyzhub.com",
+  "https://babuz-hub.vercel.app",
+  "https://babuz-hub-3u7z.vercel.app",
+  process.env.FRONTEND_URL,
+  "http://localhost:5173"
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // allow requests with no origin (e.g., mobile apps, postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS blocked: " + origin));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
+);
+
 
 app.options(/.*/, cors());
 
