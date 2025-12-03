@@ -1,45 +1,39 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import WhyUs from "./WhyUs";
 
 function Home() {
   const scrollRef = useRef(null);
 
-  const scroll = (direction) => {
-    const { current } = scrollRef;
-    if (direction === "left") {
-      current.scrollBy({ left: -800, behavior: "smooth" });
-    } else {
-      current.scrollBy({ left: 800, behavior: "smooth" });
-    }
-  };
+  // ===== AUTO SLIDER AFTER EVERY 3 SECONDS =====
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollBy({
+          left: window.innerWidth,
+          behavior: "smooth",
+        });
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
       <div className="home-container">
-        <button className="scroll-btn left" onClick={() => scroll("left")}>
-          <FiChevronLeft />
-        </button>
+
+        {/* REMOVED THE BUTTONS */}
 
         <div className="scroll-wrapper" ref={scrollRef}>
           <div className="scroll-area">
-            <img
-              src="/two.png"
-              alt="Banner 1"
-            />
-            <img
-              src="/BABY.png"
-              alt="Banner 2"
-            />
+            <img src="/two.png" alt="Banner 1" />
+            <img src="/BABY.png" alt="Banner 2" />
           </div>
         </div>
-
-        <button className="scroll-btn right" onClick={() => scroll("right")}>
-          <FiChevronRight />
-        </button>
       </div>
 
-      {/* ===== CSS IN SAME FILE ===== */}
+      {/* ===== CSS IN SAME FILE (UNCHANGED EXCEPT BUTTON REMOVED) ===== */}
       <style>{`
   .home-container {
     position: relative;
@@ -57,7 +51,6 @@ function Home() {
     overflow-x: auto;
     scroll-behavior: smooth;
     display: flex;
-    /* FIX: remove center squeezing */
     justify-content: flex-start;
     scrollbar-width: none;
   }
@@ -71,48 +64,10 @@ function Home() {
   }
 
   .scroll-area img {
-    /* FIX: force image to full width */
     width: 100vw;
     flex-shrink: 0;
     object-fit: cover;
     overflow:hidden;
-  }
-
-  .scroll-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255,255,255,0.9);
-    border: none;
-    border-radius: 50%;
-    font-size: 36px;
-    color: #00a9a5;
-    cursor: pointer;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: 0.3s;
-    z-index: 10;
-  }
-  .scroll-btn:hover {
-    background: #00a9a5;
-    color: white;
-  }
-  .scroll-btn.left {
-    left: 20px;
-  }
-  .scroll-btn.right {
-    right: 20px;
-  }
-
-  @media (max-width: 768px) {
-    .scroll-btn {
-      width: 40px;
-      height: 40px;
-      font-size: 28px;
-    }
   }
 `}</style>
 

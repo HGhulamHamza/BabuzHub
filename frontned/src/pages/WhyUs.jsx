@@ -144,7 +144,7 @@ const WhyUs = () => {
             </div>
             <div className="card-body">
               <h4>Easy Returns</h4>
-              <p>Hassle-free 30 days return policy.</p>
+              <p>Hassle-free 14 days return policy.</p>
             </div>
           </article>
 
