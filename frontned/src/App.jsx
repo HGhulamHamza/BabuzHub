@@ -24,24 +24,19 @@ function App() {
   }, []);
 
   // ✅ Load cart for specific user
-  useEffect(() => {
-    if (user) {
-      const storedCart = localStorage.getItem(`cartItems_${user._id || user.email}`);
-      if (storedCart) {
-        setCartItems(JSON.parse(storedCart));
-      } else {
-        setCartItems([]);
-      }
+useEffect(() => {
+  try {
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser && storedUser !== "undefined") {
+      setUser(JSON.parse(storedUser));
     } else {
-      // if no user logged in, fallback to a generic cart
-      const guestCart = localStorage.getItem("cartItems_guest");
-      if (guestCart) {
-        setCartItems(JSON.parse(guestCart));
-      } else {
-        setCartItems([]);
-      }
+      setUser(null);
     }
-  }, [user]);
+  } catch {
+    setUser(null);
+  }
+}, []);
+
 
   // ✅ Save cart for specific user
   useEffect(() => {

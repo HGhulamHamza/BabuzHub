@@ -12,26 +12,81 @@ function Auth({ setUser }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
+  const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+  /* =====================
+     VALIDATION HELPERS
+  ====================== */
+
+  const isValidEmail = (email) => {
+    return email.endsWith("@gmail.com") && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const isStrongPassword = (password) => {
+    return (
+      password.length >= 8 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password)
+    );
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    /* ========= SIGN UP VALIDATIONS ========= */
+    if (!isSignIn) {
+      if (fullName.trim().length < 3) {
+        toast.error("Full name must be at least 3 characters long");
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        toast.error("Email must be a valid @gmail.com address");
+        return;
+      }
+
+      if (!isStrongPassword(password)) {
+        toast.error(
+          "Password must be at least 8 characters and include uppercase, lowercase, and a number"
+        );
+        return;
+      }
+    }
+
+    /* ========= SIGN IN VALIDATIONS ========= */
+    if (isSignIn) {
+      if (!email || !password) {
+        toast.error("Please enter email and password");
+        return;
+      }
+    }
+
     try {
       if (isSignIn) {
-        const res = await axios.post(`${API_BASE}/api/auth/signin`, { email, password });
-       sessionStorage.setItem("user", JSON.stringify(res.data.user));
-setUser(res.data.user);
-window.dispatchEvent(new Event("authChange")); // ✅ notify Navbar
-toast.success(res.data.message || "Login successful!");
-setTimeout(() => navigate("/"), 1000);
+        const res = await axios.post(`${API_BASE}/api/auth/signin`, {
+          email,
+          password,
+        });
 
+        sessionStorage.setItem("user", JSON.stringify(res.data.user));
+        setUser(res.data.user);
+        window.dispatchEvent(new Event("authChange")); // notify Navbar
+
+        toast.success(res.data.message || "Login successful!");
+        setTimeout(() => navigate("/"), 1000);
       } else {
-        const res = await axios.post(`${API_BASE}/api/auth/signup`, { fullName, email, password });
+        const res = await axios.post(`${API_BASE}/api/auth/signup`, {
+          fullName,
+          email,
+          password,
+        });
+
         toast.success(res.data.message || "Account created!");
-        setIsSignIn(true); 
-        setFullName(""); 
-        setEmail(""); 
+        setIsSignIn(true);
+        setFullName("");
+        setEmail("");
         setPassword("");
       }
     } catch (err) {
@@ -44,57 +99,182 @@ setTimeout(() => navigate("/"), 1000);
       <div className="auth-container">
         <div className="auth-box">
           <h2>{isSignIn ? "Login" : "Create Account"}</h2>
+
           <form className="auth-form" onSubmit={handleSubmit}>
             {!isSignIn && (
               <div className="form-group">
                 <label>Full Name</label>
-                <input type="text" placeholder="Enter your name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                <input
+                  type="text"
+                  placeholder="Enter your name"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
               </div>
             )}
+
             <div className="form-group">
               <label>Email</label>
-              <input type="email" placeholder="Enter your email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input
+                type="email"
+                placeholder="Enter your email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
+
             <div className="form-group password-field">
               <label>Password</label>
               <div className="password-wrapper">
-                <input type={showPassword ? "text" : "password"} placeholder="Enter your password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-                <span className="toggle-eye" onClick={() => setShowPassword(!showPassword)}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <span
+                  className="toggle-eye"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
                   {showPassword ? <FiEyeOff /> : <FiEye />}
                 </span>
               </div>
             </div>
-            <button type="submit" className="auth-btn">{isSignIn ? "Sign in" : "Create account"}</button>
+
+            <button type="submit" className="auth-btn">
+              {isSignIn ? "Sign in" : "Create account"}
+            </button>
           </form>
 
           <p className="toggle-text">
-            {isSignIn ? <>Don’t have an account? <span onClick={() => setIsSignIn(false)}>Create one</span></> 
-                       : <>Already have an account? <span onClick={() => setIsSignIn(true)}>Sign in</span></>}
+            {isSignIn ? (
+              <>
+                Don’t have an account?{" "}
+                <span onClick={() => setIsSignIn(false)}>Create one</span>
+              </>
+            ) : (
+              <>
+                Already have an account?{" "}
+                <span onClick={() => setIsSignIn(true)}>Sign in</span>
+              </>
+            )}
           </p>
         </div>
       </div>
 
       <ToastContainer />
 
+      {/* 🔒 OLD STYLING — UNCHANGED */}
       <style>{`
-        .auth-container { width: 100%; min-height: 100vh; display: flex; justify-content: center; align-items: center; background: #f9f9f9; font-family: 'Poppins', sans-serif; }
-        .auth-box { background: #fff; padding: 50px 60px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); text-align: center; width: 400px; }
-        .auth-box h2 { font-size: 28px; font-weight: 700; margin-bottom: 30px; color: #00a9a5; }
-        .auth-form { display: flex; flex-direction: column; gap: 20px; }
-        .form-group { text-align: left; }
-        .form-group label { display: block; font-size: 15px; margin-bottom: 6px; color: #333; }
-        .form-group input { width: 100%; padding: 12px 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; outline: none; transition: all 0.3s ease; }
-        .form-group input:focus { border-color: #00a9a5; box-shadow: 0 0 5px rgba(0,169,165,0.2); }
-        .password-wrapper { position: relative; display: flex; align-items: center; }
-        .password-wrapper input { width: 100%; padding-right: 45px; }
-        .toggle-eye { position: absolute; right: 15px; cursor: pointer; font-size: 20px; color: #00a9a5; transition: color 0.3s; }
-        .toggle-eye:hover { color: #008f8b; }
-        .auth-btn { background: #00a9a5; color: white; border: none; padding: 12px; font-size: 17px; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-weight: 600; }
-        .auth-btn:hover { background: #008f8b; }
-        .toggle-text { margin-top: 25px; font-size: 15px; color: #555; }
-        .toggle-text span { color: #00a9a5; cursor: pointer; font-weight: 600; }
-        .toggle-text span:hover { text-decoration: underline; }
-        @media (max-width: 480px) { .auth-box { width: 90%; padding: 40px 25px; } .auth-box h2 { font-size: 24px; } }
+        .auth-container {
+          width: 100%;
+          min-height: 100vh;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background: #f9f9f9;
+          font-family: 'Poppins', sans-serif;
+        }
+        .auth-box {
+          background: #fff;
+          padding: 50px 60px;
+          border-radius: 12px;
+          box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+          text-align: center;
+          width: 400px;
+        }
+        .auth-box h2 {
+          font-size: 28px;
+          font-weight: 700;
+          margin-bottom: 30px;
+          color: #00a9a5;
+        }
+        .auth-form {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+        .form-group {
+          text-align: left;
+        }
+        .form-group label {
+          display: block;
+          font-size: 15px;
+          margin-bottom: 6px;
+          color: #333;
+        }
+        .form-group input {
+          width: 100%;
+          padding: 12px 15px;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          font-size: 15px;
+          outline: none;
+          transition: all 0.3s ease;
+        }
+        .form-group input:focus {
+          border-color: #00a9a5;
+          box-shadow: 0 0 5px rgba(0,169,165,0.2);
+        }
+        .password-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        .password-wrapper input {
+          width: 100%;
+          padding-right: 45px;
+        }
+        .toggle-eye {
+          position: absolute;
+          right: 15px;
+          cursor: pointer;
+          font-size: 20px;
+          color: #00a9a5;
+          transition: color 0.3s;
+        }
+        .toggle-eye:hover {
+          color: #008f8b;
+        }
+        .auth-btn {
+          background: #00a9a5;
+          color: white;
+          border: none;
+          padding: 12px;
+          font-size: 17px;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.3s;
+          font-weight: 600;
+        }
+        .auth-btn:hover {
+          background: #008f8b;
+        }
+        .toggle-text {
+          margin-top: 25px;
+          font-size: 15px;
+          color: #555;
+        }
+        .toggle-text span {
+          color: #00a9a5;
+          cursor: pointer;
+          font-weight: 600;
+        }
+        .toggle-text span:hover {
+          text-decoration: underline;
+        }
+        @media (max-width: 480px) {
+          .auth-box {
+            width: 90%;
+            padding: 40px 25px;
+          }
+          .auth-box h2 {
+            font-size: 24px;
+          }
+        }
       `}</style>
     </>
   );

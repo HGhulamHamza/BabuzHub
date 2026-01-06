@@ -3,50 +3,89 @@ import { useParams, useNavigate } from "react-router-dom";
 import { FiShoppingCart, FiCreditCard, FiPlus, FiMinus } from "react-icons/fi";
 import axios from "axios";
 
-function SingleProduct({ user, cartItems, setCartItems }) {
+function SingleProduct({ cartItems, setCartItems }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [quantity, setQuantity] = useState(1);
+
+  const [loggedInUser, setLoggedInUser] = useState(null);
   const [product, setProduct] = useState(null);
+  const [quantity, setQuantity] = useState(1);
   const [selectedOption, setSelectedOption] = useState(null);
   const [selectedSize, setSelectedSize] = useState("Medium");
   const [mainImage, setMainImage] = useState("");
+  const [showSideMsg, setShowSideMsg] = useState(false);
 
   const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
+  // ✅ SAFE user reader
+  const getStoredUser = () => {
+    try {
+      const user = sessionStorage.getItem("user");
+      if (!user || user === "undefined") return null;
+      return JSON.parse(user);
+    } catch {
+      return null;
+    }
+  };
+
+  // ✅ Sync user state
+  const syncUser = () => {
+    const user = getStoredUser();
+    setLoggedInUser(user);
+  };
+
+  useEffect(() => {
+    syncUser();
+    window.addEventListener("authChange", syncUser);
+    return () => window.removeEventListener("authChange", syncUser);
+  }, []);
+
+  // ✅ Fetch product
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const res = await axios.get(`${API_BASE}/api/products/${id}`);
         setProduct(res.data);
 
-        if (res.data.images && res.data.images.length > 0) {
-          setMainImage(res.data.images[0]);
-        } else {
-          setMainImage(res.data.img);
-        }
+        if (res.data.images?.length) setMainImage(res.data.images[0]);
+        else setMainImage(res.data.img);
 
-        if (res.data.options && res.data.options.length > 0) {
-          setSelectedOption(res.data.options[0]);
-        }
+        if (res.data.options?.length) setSelectedOption(res.data.options[0]);
       } catch (err) {
-        console.error("❌ Failed to fetch product:", err);
+        console.error("Failed to fetch product:", err);
       }
     };
     fetchProduct();
   }, [id]);
 
-  if (!product)
-    return <p style={{ textAlign: "center", marginTop: "80px" }}>Loading product...</p>;
+  if (!product) return <p>Loading product...</p>;
 
+  // ✅ Login check
+  const checkUserLogin = () => {
+    const user = getStoredUser();
+    if (!user) {
+      setShowSideMsg(true);
+      setTimeout(() => {
+        setShowSideMsg(false);
+        navigate("/auth");
+      }, 1500);
+      return null;
+    }
+    return user;
+  };
+
+  // ✅ Add to cart
   const handleAddToCart = () => {
+    const user = checkUserLogin();
+    if (!user) return;
+
     const newItem = {
       id: product._id,
       title: product.title,
       img: mainImage,
       price: selectedOption ? selectedOption.price : product.price,
       selectedOption: selectedOption ? { ...selectedOption } : null,
-      quantity: Number(quantity),
+      quantity,
       selectedSize,
     };
 
@@ -68,19 +107,18 @@ function SingleProduct({ user, cartItems, setCartItems }) {
           )
         : [...prev, newItem];
 
-      const key = user ? `cartItems_${user._id || user.email}` : "cartItems_guest";
+      const key = `cartItems_${user._id || user.email}`;
       localStorage.setItem(key, JSON.stringify(updated));
 
       return updated;
     });
 
-    setTimeout(() => navigate("/cart"), 100);
+    navigate("/cart");
   };
 
   return (
     <>
       <div className="single-container">
-        {/* MAIN IMAGE */}
         <div className="single-image">
           <img src={mainImage} alt={product.title} />
         </div>
@@ -88,12 +126,11 @@ function SingleProduct({ user, cartItems, setCartItems }) {
         <div className="single-details">
           <h2>{product.title}</h2>
 
-          {/* SUB IMAGES (only for this product) */}
           {product.images && (
             <div style={{ display: "flex", gap: "15px", marginBottom: "20px" }}>
-              {product.images.map((img, index) => (
+              {product.images.map((img, i) => (
                 <img
-                  key={index}
+                  key={i}
                   src={img}
                   onClick={() => setMainImage(img)}
                   style={{
@@ -109,44 +146,17 @@ function SingleProduct({ user, cartItems, setCartItems }) {
             </div>
           )}
 
-          {/* OPTIONS BUTTONS (unchanged styling) */}
-          {product.options && product.options.length > 0 && (
+          {product.options?.length > 0 && (
             <div className="options">
               {product.options.map((opt) => (
                 <button
                   key={opt._id}
-                  className={`option-btn ${
-                    selectedOption?._id === opt._id ? "active" : ""
-                  }`}
+                  className={`option-btn ${selectedOption?._id === opt._id ? "active" : ""}`}
                   onClick={() => setSelectedOption(opt)}
                 >
                   {opt.name} - Rs {opt.price}
                 </button>
               ))}
-            </div>
-          )}
-
-          {/* SIZE DROPDOWN ONLY FOR DIAPER PRODUCT */}
-          {product.title === "Adjustable Washable Cloth Diaper + Inner" && (
-            <div style={{ marginBottom: "20px" }}>
-              <label style={{ fontWeight: "600", marginRight: "10px" }}>
-                Size:
-              </label>
-              <select
-                value={selectedSize}
-                onChange={(e) => setSelectedSize(e.target.value)}
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid #ccc",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                }}
-              >
-                <option value="Small">Small</option>
-                <option value="Medium">Medium</option>
-                <option value="Large">Large</option>
-              </select>
             </div>
           )}
 
@@ -166,7 +176,6 @@ function SingleProduct({ user, cartItems, setCartItems }) {
             </button>
           </div>
 
-          {/* ADD TO CART + BUY NOW (unchanged styling) */}
           <div className="action-btns">
             <button className="cart-btn" onClick={handleAddToCart}>
               <FiShoppingCart /> Add to Cart
@@ -174,7 +183,10 @@ function SingleProduct({ user, cartItems, setCartItems }) {
 
             <button
               className="buy-btn"
-              onClick={() =>
+              onClick={() => {
+                const user = checkUserLogin();
+                if (!user) return;
+
                 navigate("/buy-now", {
                   state: {
                     product: {
@@ -182,13 +194,13 @@ function SingleProduct({ user, cartItems, setCartItems }) {
                       title: product.title,
                       img: mainImage,
                       price: selectedOption ? selectedOption.price : product.price,
-                      selectedOption: selectedOption || null,
+                      selectedOption,
                       quantity,
                       selectedSize,
                     },
                   },
-                })
-              }
+                });
+              }}
             >
               <FiCreditCard /> Buy Now
             </button>
@@ -196,9 +208,15 @@ function SingleProduct({ user, cartItems, setCartItems }) {
         </div>
       </div>
 
-      {/* EXISTING CSS (unchanged) */}
-      <style>{`
-        .single-container {
+      {showSideMsg && (
+        <div className="side-msg">
+          <p>First create an account to view cart!</p>
+        </div>
+      )}
+
+      <style>{ `
+      
+         .single-container {
           display: flex;
           justify-content: center;
           align-items: center;
@@ -298,7 +316,7 @@ function SingleProduct({ user, cartItems, setCartItems }) {
         .buy-btn:hover {
           background: #000;
         }
-          /* 📱 MOBILE RESPONSIVE STYLING */
+
 @media (max-width: 768px) {
   .single-container {
     flex-direction: column;
@@ -312,11 +330,6 @@ function SingleProduct({ user, cartItems, setCartItems }) {
     max-width: 300px;
     height: auto;
     border-radius: 14px;
-  }
-
-  /* Sub images row */
-  .single-details > div:nth-child(2) {
-    justify-content: center;
   }
 
   .single-details {
@@ -333,7 +346,6 @@ function SingleProduct({ user, cartItems, setCartItems }) {
     max-width: 250px;
   }
 
-  /* Make buttons full width */
   .action-btns {
     flex-direction: column;
     width: 100%;
@@ -347,18 +359,14 @@ function SingleProduct({ user, cartItems, setCartItems }) {
     font-size: 16px;
   }
 
-  /* Quantity box centered */
   .quantity-box {
     justify-content: center;
   }
 
   .desc {
     text-align: left;
-    padding: 0 10px;
-  }
-}
-
-      `}</style>
+    padding: 0 10px;`
+  }</style>
     </>
   );
 }
