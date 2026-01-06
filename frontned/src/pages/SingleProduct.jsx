@@ -15,15 +15,13 @@ function SingleProduct({ cartItems, setCartItems }) {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [loggedInUser, setLoggedInUser] = useState(null);
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [selectedSize, setSelectedSize] = useState("Medium");
   const [mainImage, setMainImage] = useState("");
   const [showSideMsg, setShowSideMsg] = useState(false);
 
-  // 🔥 marketing states
+  // 🔥 marketing
   const [marketing, setMarketing] = useState(null);
   const [timeLeft, setTimeLeft] = useState({});
 
@@ -40,30 +38,42 @@ function SingleProduct({ cartItems, setCartItems }) {
     }
   };
 
-  const syncUser = () => setLoggedInUser(getStoredUser());
-
-  useEffect(() => {
-    syncUser();
-    window.addEventListener("authChange", syncUser);
-    return () => window.removeEventListener("authChange", syncUser);
-  }, []);
-
   // ================= PRODUCT =================
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const res = await axios.get(`${API_BASE}/api/products/${id}`);
-        setProduct(res.data);
-        setMainImage(res.data.images?.[0] || res.data.img);
-        if (res.data.options?.length) setSelectedOption(res.data.options[0]);
+        const data = res.data;
+
+        const normalizedOptions =
+          data.options?.length
+            ? data.options
+            : data.variants?.length
+            ? data.variants
+            : [];
+
+        setProduct({
+          ...data,
+          normalizedOptions,
+        });
+
+        setMainImage(data.images?.[0] || data.img);
+
+        if (normalizedOptions.length > 0) {
+          setSelectedOption(normalizedOptions[0]);
+        }
       } catch (err) {
-        console.error(err);
+        console.error("Failed to fetch product:", err);
       }
     };
+
     fetchProduct();
   }, [id]);
 
   // ================= MARKETING =================
+const SALE_DURATION = 10 * 60 * 60 * 1000;
+
+
   const getMarketingStats = (pid) => {
     const key = `marketing_${pid}`;
     const saved = localStorage.getItem(key);
@@ -71,30 +81,25 @@ function SingleProduct({ cartItems, setCartItems }) {
 
     const data = {
       rating: (Math.random() * (5 - 4.4) + 4.4).toFixed(1),
-      reviews: Math.floor(Math.random() * 40) + 10,
-      watching: Math.floor(Math.random() * 35) + 15,
+      reviews: Math.floor(Math.random() * 40) + 20,
+      watching: Math.floor(Math.random() * 30) + 10,
       sold: Math.floor(Math.random() * 120) + 30,
-      discount: 25,
+      discount: 40,
     };
 
     localStorage.setItem(key, JSON.stringify(data));
     return data;
   };
 
-  const SALE_DURATION = 5 * 60 * 60 * 1000;
-
   const getSaleEndTime = (pid) => {
-    const key = `sale_end_${pid}`;
-    const saved = localStorage.getItem(key);
-    const now = Date.now();
+  const key = `sale_end_${pid}`;
+  const now = Date.now();
 
-    if (!saved || now > saved) {
-      const end = now + SALE_DURATION;
-      localStorage.setItem(key, end);
-      return end;
-    }
-    return Number(saved);
-  };
+  const end = now + SALE_DURATION;
+  localStorage.setItem(key, end);
+  return end;
+};
+
 
   useEffect(() => {
     if (!product) return;
@@ -105,9 +110,9 @@ function SingleProduct({ cartItems, setCartItems }) {
     const timer = setInterval(() => {
       const diff = endTime - Date.now();
       setTimeLeft({
-        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        mins: Math.floor((diff / (1000 * 60)) % 60),
-        secs: Math.floor((diff / 1000) % 60),
+        hours: Math.max(0, Math.floor(diff / (1000 * 60 * 60))),
+        mins: Math.max(0, Math.floor((diff / (1000 * 60)) % 60)),
+        secs: Math.max(0, Math.floor((diff / 1000) % 60)),
       });
     }, 1000);
 
@@ -116,10 +121,13 @@ function SingleProduct({ cartItems, setCartItems }) {
 
   if (!product) return <p>Loading product...</p>;
 
+  // ================= PRICE =================
   const REAL_PRICE = selectedOption ? selectedOption.price : product.price;
-  const OLD_PRICE = Math.round(REAL_PRICE * 1.25);
+const DISCOUNT_PERCENT = 40;
+const OLD_PRICE = Math.round(REAL_PRICE / (1 - DISCOUNT_PERCENT / 100));
 
-  // ================= CART =================
+
+  // ================= AUTH =================
   const checkUserLogin = () => {
     const user = getStoredUser();
     if (!user) {
@@ -133,6 +141,7 @@ function SingleProduct({ cartItems, setCartItems }) {
     return user;
   };
 
+  // ================= CART =================
   const handleAddToCart = () => {
     const user = checkUserLogin();
     if (!user) return;
@@ -144,22 +153,24 @@ function SingleProduct({ cartItems, setCartItems }) {
       price: REAL_PRICE,
       selectedOption,
       quantity,
-      selectedSize,
     };
 
     setCartItems((prev) => {
       const exists = prev.find(
         (p) =>
           p.id === newItem.id &&
-          p.selectedOption?._id === newItem.selectedOption?._id &&
-          p.selectedSize === newItem.selectedSize
+          p.selectedOption?._id === newItem.selectedOption?._id
       );
 
-      const updated = exists
-        ? prev.map((p) =>
-            p === exists ? { ...p, quantity: p.quantity + quantity } : p
-          )
-        : [...prev, newItem];
+    const updated = exists
+  ? prev.map((p) =>
+      p.id === newItem.id &&
+      p.selectedOption?._id === newItem.selectedOption?._id
+        ? { ...p, quantity: p.quantity + quantity }
+        : p
+    )
+  : [...prev, newItem];
+
 
       localStorage.setItem(
         `cartItems_${user._id || user.email}`,
@@ -171,6 +182,7 @@ function SingleProduct({ cartItems, setCartItems }) {
     navigate("/cart");
   };
 
+  // ================= UI =================
   return (
     <>
       <div className="single-container">
@@ -180,6 +192,22 @@ function SingleProduct({ cartItems, setCartItems }) {
 
         <div className="single-details">
           <h2>{product.title}</h2>
+              {/* Variants */}
+          {product.normalizedOptions?.length > 0 && (
+            <div className="options">
+              {product.normalizedOptions.map((opt) => (
+                <button
+                  key={opt._id}
+                  className={`option-btn ${
+                    selectedOption?._id === opt._id ? "active" : ""
+                  }`}
+                  onClick={() => setSelectedOption(opt)}
+                >
+                  {opt.name} - Rs {opt.price}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* ⭐ Rating */}
           {marketing && (
@@ -195,8 +223,9 @@ function SingleProduct({ cartItems, setCartItems }) {
               <span className="old-price">Rs {OLD_PRICE}</span>
               <span className="new-price">Rs {REAL_PRICE}</span>
               <span className="discount">
-                <FiTag /> {marketing.discount}% OFF
-              </span>
+  <FiTag /> {DISCOUNT_PERCENT}% OFF
+</span>
+
             </div>
           )}
 
@@ -204,7 +233,7 @@ function SingleProduct({ cartItems, setCartItems }) {
           {marketing && (
             <div className="social-proof">
               <p>
-                <BsEyeFill /> {marketing.watching} people viewing now
+                <BsEyeFill /> {marketing.watching} viewing now
               </p>
               <p>
                 <BsGraphUpArrow /> {marketing.sold} sold recently
@@ -213,15 +242,14 @@ function SingleProduct({ cartItems, setCartItems }) {
           )}
 
           {/* ⏰ Countdown */}
-          {marketing && (
-            <div className="countdown">
-              <FiClock />  <b>Hurry Up! </b>Sale ends in{" "}
-              <b>
-                {timeLeft.hours || 0}h {timeLeft.mins || 0}m{" "}
-                {timeLeft.secs || 0}s
-              </b>
-            </div>
-          )}
+          <div className="countdown">
+            <FiClock /> <b>Hurry Up ! </b>Sale ends in{" "}
+            <b>
+              {timeLeft.hours}h {timeLeft.mins}m {timeLeft.secs}s
+            </b>
+          </div>
+
+      
 
           <p className="desc">{product.description}</p>
 
@@ -242,21 +270,26 @@ function SingleProduct({ cartItems, setCartItems }) {
               <FiShoppingCart /> Add to Cart
             </button>
 
-            <button className="buy-btn">
+            <button className="buy-btn" onClick={checkUserLogin}>
               <FiCreditCard /> Buy Now
             </button>
           </div>
         </div>
       </div>
 
+      {showSideMsg && (
+        <div className="side-msg">
+          <p>First create an account to view cart!</p>
+        </div>
+      )}
+
+      {/* ===== STYLES (OLD + MARKETING) ===== */}
       <style>{`
-      /* ===== ORIGINAL STYLES PRESERVED ===== */
       .single-container {
         display: flex;
         justify-content: center;
-        align-items: center;
-        padding: 70px 90px;
         gap: 70px;
+        padding: 70px 90px;
         font-family: 'Poppins', sans-serif;
       }
       .single-image img {
@@ -264,9 +297,14 @@ function SingleProduct({ cartItems, setCartItems }) {
         border-radius: 16px;
         box-shadow: 0 6px 20px rgba(0,0,0,0.1);
       }
+      .rating-row {
+        display: flex;
+        gap: 6px;
+        color: #f4b400;
+        font-weight: 600;
+      }
       .price-box {
         display: flex;
-        align-items: center;
         gap: 12px;
         margin: 12px 0;
       }
@@ -281,31 +319,72 @@ function SingleProduct({ cartItems, setCartItems }) {
       }
       .discount {
         background: #e63946;
-        color: white;
+        color: #fff;
         padding: 4px 10px;
         border-radius: 20px;
         font-size: 12px;
+      }
+      .quantity-box {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 15px;
+        margin-bottom: 25px;
       }
-      .rating-row {
+      .quantity-box button {
+        width: 35px;
+        height: 35px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        background: #fff;
+      }
+      .action-btns {
         display: flex;
-        gap: 6px;
-        color: #f4b400;
+        gap: 20px;
+      }
+        .options {
+  display: flex;
+  gap: 12px;
+  margin: 15px 0;
+  flex-wrap: wrap;
+}
+
+.option-btn {
+  border: 1px solid #ccc;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #fff;
+  font-size: 14px;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.option-btn:hover {
+  border-color: #00a9a5;
+  color: #00a9a5;
+}
+
+.option-btn.active {
+  background: #00a9a5;
+  color: #fff;
+  border-color: #00a9a5;
+}
+
+      .cart-btn {
+        background: #00a9a5;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 10px;
+        border: none;
         font-weight: 600;
       }
-      .social-proof p {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 14px;
-      }
-      .countdown {
-        background: #f1fdfc;
-        padding: 10px;
-        border-left: 4px solid #00a9a5;
-        margin: 12px 0;
+      .buy-btn {
+        background: #333;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
       }
           .quantity-box button {
           border: 1px solid #ccc;
@@ -350,15 +429,6 @@ function SingleProduct({ cartItems, setCartItems }) {
         .buy-btn:hover {
           background: #000;
         }
-          /* ===== FIX QUANTITY ALIGNMENT ===== */
-.quantity-box {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin: 18px 0;
-  flex-wrap: nowrap;
-}
-
 
 @media (max-width: 768px) {
   .single-container {
@@ -408,10 +478,10 @@ function SingleProduct({ cartItems, setCartItems }) {
 
   .desc {
     text-align: left;
-    padding: 0 10px;`
-      }</style>
+    padding: 0 10px;     `}</style>
     </>
   );
-}
+};
+
 
 export default SingleProduct;
