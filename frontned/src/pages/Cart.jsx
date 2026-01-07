@@ -1,18 +1,16 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-function Cart({ user, cartItems, setCartItems }) {
+function Cart({ cartItems, setCartItems }) {
   const navigate = useNavigate();
+  const { user, isLoggedIn } = useAuth();
 
-  if (!user) {
-    navigate("/auth");
-    return null;
-  }
+  useEffect(() => {
+    if (!isLoggedIn) navigate("/auth");
+  }, [isLoggedIn, navigate]);
 
-  const total = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  if (!isLoggedIn) return null;
 
   const removeItem = (index) => {
     const updated = cartItems.filter((_, i) => i !== index);
@@ -21,15 +19,6 @@ function Cart({ user, cartItems, setCartItems }) {
     const key = `cartItems_${user._id || user.email}`;
     localStorage.setItem(key, JSON.stringify(updated));
   };
-
-  if (cartItems.length === 0) {
-    return (
-      <div className="empty-cart">
-        <h2>Your cart is empty</h2>
-        <button onClick={() => navigate("/product")}>Shop Now</button>
-      </div>
-    );
-  }
 
   return (
     <div className="cart-container">

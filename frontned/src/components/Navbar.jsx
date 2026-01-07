@@ -1,50 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { FiSearch, FiUser, FiShoppingBag, FiMenu, FiX } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-
+import { useAuth } from "../context/AuthContext";
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showSideMsg, setShowSideMsg] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ Run once on mount + listen for auth changes
-  useEffect(() => {
-    const checkLogin = () => {
-      const user = sessionStorage.getItem("user");
-      setIsLoggedIn(!!user);
-    };
+  const { isLoggedIn, logout } = useAuth();
 
-    checkLogin();
-
-    window.addEventListener("authChange", checkLogin);
-    window.addEventListener("storage", checkLogin);
-
-    return () => {
-      window.removeEventListener("authChange", checkLogin);
-      window.removeEventListener("storage", checkLogin);
-    };
-  }, []);
-
-  const handleLogout = () => {
-    sessionStorage.removeItem("user");
-    setIsLoggedIn(false);
-    window.dispatchEvent(new Event("authChange"));
-    toast.success("Logged out successfully!");
-    navigate("/");
-  };
-
-  // ✅ Handle cart click
   const handleCartClick = () => {
     if (isLoggedIn) {
       navigate("/cart");
     } else {
       setShowSideMsg(true);
-      setTimeout(() => setShowSideMsg(false), 3000); // hide after 3s
+      setTimeout(() => setShowSideMsg(false), 3000);
     }
   };
 
@@ -52,15 +23,9 @@ function Navbar() {
     <>
       <nav className="navbar">
         <div className="nav-left">
-          <Link to="/" className="nav-link active">
-            Home
-          </Link>
-          <Link to="/why-us" className="nav-link">
-            Why Us?
-          </Link>
-          <Link to="/product" className="nav-link">
-            Products
-          </Link>
+          <Link to="/" className="nav-link active">Home</Link>
+          <Link to="/why-us" className="nav-link">Why Us?</Link>
+          <Link to="/product" className="nav-link">Products</Link>
         </div>
 
         <div className="nav-center">
@@ -69,8 +34,9 @@ function Navbar() {
 
         <div className="nav-right">
           <FiSearch className="nav-icon" />
+
           {isLoggedIn ? (
-            <button className="logout-btn" onClick={handleLogout}>
+            <button className="logout-btn" onClick={logout}>
               Logout
             </button>
           ) : (
@@ -79,7 +45,6 @@ function Navbar() {
             </Link>
           )}
 
-          {/* ✅ Cart Icon Click Logic */}
           <FiShoppingBag className="nav-icon" onClick={handleCartClick} />
 
           <div className="menu-icon" onClick={() => setMenuOpen(!menuOpen)}>
@@ -89,27 +54,21 @@ function Navbar() {
 
         {menuOpen && (
           <div className="mobile-menu">
-            <Link to="/" className="mobile-link" onClick={() => setMenuOpen(false)}>
-              Home
-            </Link>
-            <Link to="/why-us" className="mobile-link" onClick={() => setMenuOpen(false)}>
-              Why Us?
-            </Link>
-            <Link to="/product" className="mobile-link" onClick={() => setMenuOpen(false)}>
-              Products
-            </Link>
+            <Link to="/" className="mobile-link">Home</Link>
+            <Link to="/why-us" className="mobile-link">Why Us?</Link>
+            <Link to="/product" className="mobile-link">Products</Link>
           </div>
         )}
       </nav>
 
-      {/* ✅ Side Message when user not logged in */}
       {showSideMsg && (
         <div className="side-msg">
           <p>First create an account to view cart!</p>
         </div>
       )}
+ 
 
-      <ToastContainer />
+
 
       <style>{`
         .navbar {
@@ -173,8 +132,13 @@ function Navbar() {
           .nav-center .nav-logo { width: 90px; }
         }
       `}</style>
+
     </>
   );
 }
 
 export default Navbar;
+
+
+
+ 

@@ -11,7 +11,7 @@ import {
 import { BsStarFill, BsEyeFill, BsGraphUpArrow } from "react-icons/bs";
 import axios from "axios";
 
-function SingleProduct({ cartItems, setCartItems }) {
+function SingleProduct({ cartItems, setCartItems, user }) {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -28,15 +28,22 @@ function SingleProduct({ cartItems, setCartItems }) {
   const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
   // ================= USER =================
-  const getStoredUser = () => {
-    try {
-      const user = sessionStorage.getItem("user");
-      if (!user || user === "undefined") return null;
-      return JSON.parse(user);
-    } catch {
-      return null;
-    }
-  };
+  // const getStoredUser = () => {
+  //   try {
+  //     const user = sessionStorage.getItem("user");
+  //     if (!user || user === "undefined") return null;
+  //     return JSON.parse(user);
+  //   } catch {
+  //     return null;
+  //   }
+  // };
+const handleBuyNow = () => {
+  if (!checkUserLogin()) return;
+  handleAddToCart();
+  navigate("/buy-now");
+};
+
+
 
   // ================= PRODUCT =================
   useEffect(() => {
@@ -128,23 +135,26 @@ const OLD_PRICE = Math.round(REAL_PRICE / (1 - DISCOUNT_PERCENT / 100));
 
 
   // ================= AUTH =================
-  const checkUserLogin = () => {
-    const user = getStoredUser();
-    if (!user) {
-      setShowSideMsg(true);
-      setTimeout(() => {
-        setShowSideMsg(false);
-        navigate("/auth");
-      }, 1500);
-      return null;
-    }
-    return user;
-  };
+const checkUserLogin = () => {
+  if (!user) {
+    setShowSideMsg(true);
+    setTimeout(() => {
+      setShowSideMsg(false);
+      navigate("/auth");
+    }, 1200);
+    return false;
+  }
+  return true;
+};
+
 
   // ================= CART =================
   const handleAddToCart = () => {
-    const user = checkUserLogin();
-    if (!user) return;
+    // const user = checkUserLogin();
+   if (!user) {
+    navigate("/auth");
+    return;
+  }
 
     const newItem = {
       id: product._id,
@@ -270,9 +280,10 @@ const OLD_PRICE = Math.round(REAL_PRICE / (1 - DISCOUNT_PERCENT / 100));
               <FiShoppingCart /> Add to Cart
             </button>
 
-            <button className="buy-btn" onClick={checkUserLogin}>
-              <FiCreditCard /> Buy Now
-            </button>
+            <button className="buy-btn" onClick={handleBuyNow}>
+  <FiCreditCard /> Buy Now
+</button>
+
           </div>
         </div>
       </div>

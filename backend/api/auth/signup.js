@@ -32,7 +32,16 @@ export default async function handler(req, res) {
       { expiresIn: "7d" }
     );
 
-    res.status(201).json({ message: "User created", token });
+    res.status(201).json({
+  message: "User created",
+  user: {
+    _id: user._id,
+    email: user.email,
+    fullName: user.fullName
+  },
+  token
+});
+
   } catch (err) {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
