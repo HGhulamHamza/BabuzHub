@@ -1,16 +1,19 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { FiPlus, FiMinus, FiTrash2 } from "react-icons/fi";
 
-function Cart({ cartItems, setCartItems }) {
+function Cart({ user, cartItems, setCartItems }) {
   const navigate = useNavigate();
-  const { user, isLoggedIn } = useAuth();
 
-  useEffect(() => {
-    if (!isLoggedIn) navigate("/auth");
-  }, [isLoggedIn, navigate]);
+  if (!user) {
+    navigate("/auth");
+    return null;
+  }
 
-  if (!isLoggedIn) return null;
+  const total = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   const removeItem = (index) => {
     const updated = cartItems.filter((_, i) => i !== index);
@@ -20,77 +23,350 @@ function Cart({ cartItems, setCartItems }) {
     localStorage.setItem(key, JSON.stringify(updated));
   };
 
+  const removeAll = () => {
+    setCartItems([]);
+    const key = `cartItems_${user._id || user.email}`;
+    localStorage.removeItem(key);
+  };
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="empty-cart">
+        <h2>Your cart is empty</h2>
+        <button onClick={() => navigate("/product")}>Shop Now</button>
+      </div>
+    );
+  }
+  const updateStorage = (updatedCart) => {
+  const key = `cartItems_${user._id || user.email}`;
+  localStorage.setItem(key, JSON.stringify(updatedCart));
+};
+
+const increaseQty = (index) => {
+  const updated = [...cartItems];
+  updated[index].quantity += 1;
+  setCartItems(updated);
+  updateStorage(updated);
+};
+
+const decreaseQty = (index) => {
+  const updated = [...cartItems];
+
+  if (updated[index].quantity > 1) {
+    updated[index].quantity -= 1;
+    setCartItems(updated);
+    updateStorage(updated);
+  }
+};
+
+
   return (
-    <div className="cart-container">
-      <h2>Your Cart</h2>
+    <div className="cart-page">
+      <h2 className="cart-title">Your Cart</h2>
 
-      {cartItems.map((item, i) => (
-        <div key={i} className="cart-item">
-          <img src={item.img} alt={item.title} />
-          <div>
-            <h4>{item.title}</h4>
-            <p>Qty: {item.quantity}</p>
-            <p>Rs {item.price * item.quantity}</p>
-          </div>
-          <button onClick={() => removeItem(i)}>Remove</button>
+      <div className="cart-table-wrapper">
+        <table className="cart-table">
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Product</th>
+              <th>Price</th>
+              <th>Quantity</th>
+              <th>Remove</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {cartItems.map((item, i) => (
+              <tr key={i}>
+                <td>
+                  <img src={item.img} alt={item.title} />
+                </td>
+                <td className="product-info">
+                  <h4>{item.title}</h4>
+                </td>
+                <td className="price">
+                  Rs {item.price * item.quantity}
+                </td>
+                <td>
+                <div className="qty-box">
+  <FiMinus onClick={() => decreaseQty(i)} />
+  <span>{item.quantity}</span>
+  <FiPlus onClick={() => increaseQty(i)} />
+</div>
+
+                </td>
+                <td>
+                  <FiTrash2
+                    className="delete-icon"
+                    onClick={() => removeItem(i)}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="cart-footer">
+        <p className="total">Total: <span>Rs {total}</span></p>
+
+        <div className="cart-actions">
+          <span className="remove-all" onClick={removeAll}>
+            Remove All
+          </span>
+          <span
+            className="add-more"
+            onClick={() => navigate("/product")}
+          >
+            Add More
+          </span>
         </div>
-      ))}
+        <button
+  className="pay-btn"
+  onClick={() => navigate("/buy-now")}
+>
+  Proceed to Pay
+</button>
 
-      <h3>Total: Rs {total}</h3>
-      <button onClick={() => navigate("/buy-now")}>Proceed to Buy</button>
-       <style>{`
-          .empty-cart {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 70vh;
-            background: #f9f9f9;
-            font-family: "Poppins", sans-serif;
-          }
+      </div>
 
-          .empty-card {
-            text-align: center;
-            background: #fff;
-            padding: 50px 40px;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            max-width: 400px;
-            width: 90%;
-          }
+      <style>{`
+        .cart-page {
+          max-width: 1100px;
+          margin: 40px auto;
+          padding: 20px;
+          font-family: "Poppins", sans-serif;
+        }
 
-          .empty-card h2 {
-            color: #00a9a5;
-            margin-top: 20px;
-            font-size: 22px;
-            font-weight: 600;
-          }
+        .cart-title {
+          font-size: 28px;
+          font-weight: 600;
+          margin-bottom: 25px;
+          color: #222;
+        }
 
-          .empty-card p {
-            color: #555;
-            margin-top: 6px;
-            font-size: 15px;
-          }
+        .cart-table-wrapper {
+          background: #fff;
+          border-radius: 18px;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+          overflow: hidden;
+        }
 
-          .continue-btn {
-            margin-top: 25px;
-            background: #00a9a5;
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            padding: 12px 28px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-          }
+        .cart-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
 
-          .continue-btn:hover {
-            background: #008f8b;
-          }
-        `}</style>
+        .cart-table thead {
+          background: #f4f6f8;
+        }
+
+        .cart-table th {
+          padding: 16px;
+          text-align: left;
+          font-size: 14px;
+          color: #666;
+          font-weight: 600;
+        }
+
+        .cart-table td {
+          padding: 18px 16px;
+          border-top: 1px solid #eee;
+          vertical-align: middle;
+        }
+
+        .cart-table img {
+          width: 70px;
+          height: 70px;
+          object-fit: cover;
+          border-radius: 10px;
+          background: #f2f2f2;
+        }
+
+        .product-info h4 {
+          font-size: 15px;
+          font-weight: 500;
+          color: #222;
+        }
+
+        .price {
+          font-weight: 600;
+          color: #00a9a5;
+        }
+
+        .qty-box {
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+          background: #f6f6f6;
+          padding: 8px 14px;
+          border-radius: 12px;
+          font-size: 14px;
+        }
+
+        .qty-box svg {
+          cursor: pointer;
+          color: #555;
+        }
+
+        .delete-icon {
+          color: #ff4d4f;
+          cursor: pointer;
+          font-size: 18px;
+        }
+
+        .cart-footer {
+          margin-top: 25px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+
+        .total {
+          font-size: 18px;
+          font-weight: 500;
+        }
+
+        .total span {
+          color: #00a9a5;
+          font-weight: 600;
+        }
+
+        .cart-actions {
+          display: flex;
+          gap: 20px;
+        }
+
+        .remove-all {
+          color: #ff4d4f;
+          font-weight: 500;
+          cursor: pointer;
+        }
+
+        .add-more {
+          color: #00a9a5;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .remove-all:hover,
+        .add-more:hover {
+          text-decoration: underline;
+        }
+
+        .empty-cart {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          height: 70vh;
+          background: #f9f9f9;
+        }
+
+        .empty-cart h2 {
+          margin-bottom: 15px;
+        }
+
+        .empty-cart button {
+          background: #00a9a5;
+          color: #fff;
+          border: none;
+          padding: 12px 30px;
+          border-radius: 10px;
+          cursor: pointer;
+        }
+          .pay-btn {
+  margin-top: 12px;
+  background: linear-gradient(135deg, #00a9a5, #00c9c4);
+  color: #fff;
+  border: none;
+  padding: 14px 40px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 169, 165, 0.35);
+  transition: 0.3s ease;
+}
+
+.pay-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 169, 165, 0.45);
+}
+
+/* ================= MOBILE RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+  .cart-title {
+    font-size: 22px;
+  }
+
+  .cart-table thead {
+    display: none;
+  }
+
+  .cart-table,
+  .cart-table tbody,
+  .cart-table tr,
+  .cart-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .cart-table tr {
+    background: #fff;
+    margin-bottom: 16px;
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  }
+
+  .cart-table td {
+    border: none;
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .cart-table img {
+    width: 60px;
+    height: 60px;
+  }
+
+  .product-info h4 {
+    font-size: 14px;
+  }
+
+  .price {
+    font-size: 14px;
+  }
+
+  .qty-box {
+    padding: 6px 10px;
+    gap: 10px;
+  }
+
+  .cart-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .cart-actions {
+    justify-content: space-between;
+  }
+
+  .pay-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+      `}</style>
     </div>
-
-    
   );
 }
 

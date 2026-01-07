@@ -1,24 +1,67 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { FiEye, FiEyeOff } from "react-icons/fi"; // ✅ ADD THIS
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
-
-function Auth() {
+function Auth({ setUser }) {
   const [isSignIn, setIsSignIn] = useState(true);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
-  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
   const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
+  /* =====================
+     VALIDATION HELPERS
+  ====================== */
+
+  const isValidEmail = (email) => {
+    return email.endsWith("@gmail.com") && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const isStrongPassword = (password) => {
+    return (
+      password.length >= 8 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password)
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    /* ========= SIGN UP VALIDATIONS ========= */
+    if (!isSignIn) {
+      if (fullName.trim().length < 3) {
+        toast.error("Full name must be at least 3 characters long");
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        toast.error("Email must be a valid @gmail.com address");
+        return;
+      }
+
+      if (!isStrongPassword(password)) {
+        toast.error(
+          "Password must be at least 8 characters and include uppercase, lowercase, and a number"
+        );
+        return;
+      }
+    }
+
+    /* ========= SIGN IN VALIDATIONS ========= */
+    if (isSignIn) {
+      if (!email || !password) {
+        toast.error("Please enter email and password");
+        return;
+      }
+    }
 
     try {
       if (isSignIn) {
@@ -27,25 +70,29 @@ function Auth() {
           password,
         });
 
-        login(res.data.user); // ✅ ONLY THIS
-        toast.success("Login successful!");
-        navigate("/");
+        sessionStorage.setItem("user", JSON.stringify(res.data.user));
+        setUser(res.data.user);
+        window.dispatchEvent(new Event("authChange")); // notify Navbar
+
+        toast.success(res.data.message || "Login successful!");
+        setTimeout(() => navigate("/"), 1000);
       } else {
-        await axios.post(`${API_BASE}/api/auth/signup`, {
+        const res = await axios.post(`${API_BASE}/api/auth/signup`, {
           fullName,
           email,
           password,
         });
 
-        toast.success("Account created!");
+        toast.success(res.data.message || "Account created!");
         setIsSignIn(true);
+        setFullName("");
+        setEmail("");
+        setPassword("");
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Something went wrong");
     }
   };
-
-
 
   return (
     <>
