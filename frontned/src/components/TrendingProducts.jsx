@@ -1,31 +1,37 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import firstImg from "../assets/first.jpeg";
+import secondImg from "../assets/second.png";
+import forthImg from "../assets/forth.png";
+import fifthImg from "../assets/fifth.jpeg";
+
+
 
 const TrendingProducts = () => {
-  const products = [
-    {
-      id: "old-1",
-      title: "Baby Toddler Walker",
-      img: "src/assets/first.jpeg",
-    },
-    {
-      id: "old-2",
-      title: "Adjustable Cloth Diaper + Inner",
-      img: "src/assets/second.png",
-    },
-    {
-      id: "new-1",
-      title: "Premium Fabric Baby Diaper",
-      img: "/src/assets/forth.png",
-      badge: "New",
-    },
-    {
-      id: "new-2",
-      title: "Soft Baby Liners",
-      img: "/src/assets/fifth.jpeg",
-      badge: "New",
-    },
-  ];
+const products = [
+  {
+    id: "old-1",
+    title: "Baby Toddler Walker",
+    img: firstImg,
+  },
+  {
+    id: "old-2",
+    title: "Adjustable Cloth Diaper + Inner",
+    img: secondImg,
+  },
+  {
+    id: "new-1",
+    title: "Premium Fabric Baby Diaper",
+    img: forthImg,
+    badge: "New",
+  },
+  {
+    id: "new-2",
+    title: "Soft Baby Liners",
+    img: fifthImg,
+    badge: "New",
+  },
+];
 
   return (
     <>
