@@ -1,52 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { FiSearch, FiUser, FiShoppingBag, FiMenu, FiX } from "react-icons/fi";
+import React, { useState } from "react";
+import { FiSearch, FiShoppingBag, FiMenu, FiX } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showSideMsg, setShowSideMsg] = useState(false);
   const navigate = useNavigate();
-
-  // ✅ Run once on mount + listen for auth changes
-  useEffect(() => {
-    const checkLogin = () => {
-      const user = sessionStorage.getItem("user");
-      setIsLoggedIn(!!user);
-    };
-
-    checkLogin();
-
-    window.addEventListener("authChange", checkLogin);
-    window.addEventListener("storage", checkLogin);
-
-    return () => {
-      window.removeEventListener("authChange", checkLogin);
-      window.removeEventListener("storage", checkLogin);
-    };
-  }, []);
-
-  const handleLogout = () => {
-    sessionStorage.removeItem("user");
-    setIsLoggedIn(false);
-    window.dispatchEvent(new Event("authChange"));
-    toast.success("Logged out successfully!");
-    navigate("/");
-  };
-
-  // ✅ Handle cart click
-  const handleCartClick = () => {
-    if (isLoggedIn) {
-      navigate("/cart");
-    } else {
-      setShowSideMsg(true);
-      setTimeout(() => setShowSideMsg(false), 3000); // hide after 3s
-    }
-  };
 
   return (
     <>
@@ -69,18 +27,12 @@ function Navbar() {
 
         <div className="nav-right">
           <FiSearch className="nav-icon" />
-          {isLoggedIn ? (
-            <button className="logout-btn" onClick={handleLogout}>
-              Logout
-            </button>
-          ) : (
-            <Link to="/auth">
-              <FiUser className="nav-icon" />
-            </Link>
-          )}
 
-          {/* ✅ Cart Icon Click Logic */}
-          <FiShoppingBag className="nav-icon" onClick={handleCartClick} />
+          {/* ✅ Cart is now always accessible */}
+          <FiShoppingBag
+            className="nav-icon"
+            onClick={() => navigate("/cart")}
+          />
 
           <div className="menu-icon" onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <FiX /> : <FiMenu />}
@@ -102,15 +54,6 @@ function Navbar() {
         )}
       </nav>
 
-      {/* ✅ Side Message when user not logged in */}
-      {showSideMsg && (
-        <div className="side-msg">
-          <p>First create an account to view cart!</p>
-        </div>
-      )}
-
-      <ToastContainer />
-
       <style>{`
         .navbar {
           width: 100%;
@@ -127,50 +70,102 @@ function Navbar() {
           font-family: 'Poppins', sans-serif;
           box-sizing: border-box;
         }
-        .nav-left { display: flex; gap: 25px; }
-        .nav-link { text-decoration: none; font-size: 16px; color: #333; font-weight: 500; transition: 0.3s; }
-        .nav-link.active { background: black; color: white; padding: 6px 14px; border-radius: 6px; }
-        .nav-link:hover { color: #00a9a5; }
-        .nav-center .nav-logo { width: 120px; }
-        .nav-right { display: flex; align-items: center; gap: 20px; font-size: 22px; }
-        .nav-icon { cursor: pointer; color: #333; transition: 0.3s; }
-        .nav-icon:hover { color: #00a9a5; }
-        .logout-btn { background: #00a9a5; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: 500; transition: all 0.3s; }
-        .logout-btn:hover { background: #008f8b; }
-        .menu-icon { display: none; font-size: 26px; cursor: pointer; }
-        .mobile-menu { display: none; flex-direction: column; background: white; position: absolute; top: 100%; left: 0; width: 100%; border-top: 1px solid #eee; padding: 15px 0; }
-        .mobile-link { padding: 12px 25px; text-decoration: none; color: #333; font-weight: 500; transition: 0.3s; }
-        .mobile-link:hover { background: #f4f4f4; color: #00a9a5; }
 
-        /* ✅ Side Message Style */
-        .side-msg {
-          position: fixed;
-          right: 20px;
-          top: 100px;
-          background: #00a9a5;
-          color: white;
-          padding: 14px 20px;
-          border-radius: 10px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          animation: fadeInOut 3s ease forwards;
-          font-family: 'Poppins', sans-serif;
-          z-index: 2000;
+        .nav-left {
+          display: flex;
+          gap: 25px;
         }
-        @keyframes fadeInOut {
-          0% { opacity: 0; transform: translateX(50px); }
-          10% { opacity: 1; transform: translateX(0); }
-          90% { opacity: 1; transform: translateX(0); }
-          100% { opacity: 0; transform: translateX(50px); }
+
+        .nav-link {
+          text-decoration: none;
+          font-size: 16px;
+          color: #333;
+          font-weight: 500;
+          transition: 0.3s;
+        }
+
+        .nav-link.active {
+          background: black;
+          color: white;
+          padding: 6px 14px;
+          border-radius: 6px;
+        }
+
+        .nav-link:hover {
+          color: #00a9a5;
+        }
+
+        .nav-center .nav-logo {
+          width: 120px;
+        }
+
+        .nav-right {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          font-size: 22px;
+        }
+
+        .nav-icon {
+          cursor: pointer;
+          color: #333;
+          transition: 0.3s;
+        }
+
+        .nav-icon:hover {
+          color: #00a9a5;
+        }
+
+        .menu-icon {
+          display: none;
+          font-size: 26px;
+          cursor: pointer;
+        }
+
+        .mobile-menu {
+          display: none;
+          flex-direction: column;
+          background: white;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          width: 100%;
+          border-top: 1px solid #eee;
+          padding: 15px 0;
+        }
+
+        .mobile-link {
+          padding: 12px 25px;
+          text-decoration: none;
+          color: #333;
+          font-weight: 500;
+          transition: 0.3s;
+        }
+
+        .mobile-link:hover {
+          background: #f4f4f4;
+          color: #00a9a5;
         }
 
         @media (max-width: 900px) {
-          .nav-left { display: none; }
-          .menu-icon { display: block; }
-          .mobile-menu { display: flex; }
+          .nav-left {
+            display: none;
+          }
+          .menu-icon {
+            display: block;
+          }
+          .mobile-menu {
+            display: flex;
+          }
         }
+
         @media (max-width: 500px) {
-          .navbar { padding: 12px 20px; }
-          .nav-center .nav-logo { width: 90px; }
+          .navbar {
+            padding: 12px 20px;
+          }
+          .nav-center .nav-logo {
+            width: 90px;
+          }
         }
       `}</style>
     </>

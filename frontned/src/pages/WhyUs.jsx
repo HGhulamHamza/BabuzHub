@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import ReviewsSection from "../components/ReviewSection";
 
 /**
  * WhyUs.jsx
@@ -165,6 +166,7 @@ const WhyUs = () => {
           </article>
         </div>
       </section>
+      <ReviewsSection/>
 
       {/* ===== Footer: floating wave top with centered logo ===== */}
       <footer className="site-footer">
@@ -419,6 +421,7 @@ const WhyUs = () => {
           .card-icon { width: 56px; height: 56px; }
         }
       `}</style>
+    
     </>
   );
 };

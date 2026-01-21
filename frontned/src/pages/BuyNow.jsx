@@ -18,10 +18,10 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [errors, setErrors] = useState({});
 
-  // 🔥 AUTH GUARD (SAFE)
-  useEffect(() => {
-    if (!user) navigate("/auth");
-  }, [user, navigate]);
+  // // 🔥 AUTH GUARD (SAFE)
+  // useEffect(() => {
+  //   if (!user) navigate("/auth");
+  // }, [user, navigate]);
 
   // TOTAL CALCULATION
   useEffect(() => {
@@ -44,6 +44,94 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  const emptyStateStyles = `
+.empty-state-wrapper {
+  min-height: 70vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f9f9f9;
+  padding: 20px;
+}
+
+.empty-state-box {
+  background: #fff;
+  padding: 40px 35px;
+  border-radius: 18px;
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+  animation: fadeUp 0.4s ease;
+}
+
+.empty-icon {
+  font-size: 52px;
+  color: #00a9a5;
+  margin-bottom: 15px;
+}
+
+.empty-state-box h2 {
+  font-size: 22px;
+  margin-bottom: 8px;
+  color: #222;
+}
+
+.empty-state-box p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 22px;
+}
+
+.empty-state-box button {
+  background: linear-gradient(135deg, #00a9a5, #00c9c4);
+  color: #fff;
+  border: none;
+  padding: 14px 36px;
+  border-radius: 30px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 18px rgba(0,169,165,0.35);
+}
+
+.empty-state-box button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(0,169,165,0.45);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 📱 Mobile */
+@media (max-width: 600px) {
+  .empty-state-box {
+    padding: 30px 22px;
+  }
+
+  .empty-icon {
+    font-size: 44px;
+  }
+
+  .empty-state-box h2 {
+    font-size: 20px;
+  }
+
+  .empty-state-box button {
+    width: 100%;
+    padding: 14px;
+  }
+}
+`;
 
   const handlePlaceOrder = async () => {
     if (!validateForm()) return;
@@ -80,16 +168,24 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
     }
   };
 
-  if (!cartItems || cartItems.length === 0) {
-    return (
-      <div className="checkout-empty">
-        <h2>No items in your cart!</h2>
+ if (!cartItems || cartItems.length === 0) {
+  return (
+    <div className="empty-state-wrapper">
+      <div className="empty-state-box">
+        <FiShoppingBag className="empty-icon" />
+        <h2>No items in your cart</h2>
+        <p>Add products before proceeding to checkout.</p>
         <button onClick={() => navigate("/product")}>
           Continue Shopping
         </button>
       </div>
-    );
-  }
+
+      <style>{emptyStateStyles}</style>
+    </div>
+  );
+}
+
+
 
   return (
     <div className="checkout-container">
@@ -370,6 +466,7 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
           }
         }
       `}</style>
+      
     </div>
   );
 };

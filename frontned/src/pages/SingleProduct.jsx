@@ -19,60 +19,31 @@ function SingleProduct({ cartItems, setCartItems }) {
   const [quantity, setQuantity] = useState(1);
   const [selectedOption, setSelectedOption] = useState(null);
   const [mainImage, setMainImage] = useState("");
-  const [showSideMsg, setShowSideMsg] = useState(false);
 
-  // 🔥 marketing
   const [marketing, setMarketing] = useState(null);
   const [timeLeft, setTimeLeft] = useState({});
 
   const API_BASE = import.meta.env.VITE_BACKEND_URL;
+  const DISCOUNT_PERCENT = 40;
 
-  // ================= USER =================
-  const getStoredUser = () => {
-    try {
-      const user = sessionStorage.getItem("user");
-      if (!user || user === "undefined") return null;
-      return JSON.parse(user);
-    } catch {
-      return null;
-    }
-  };
 
-  // ================= PRODUCT =================
   useEffect(() => {
     const fetchProduct = async () => {
-      try {
-        const res = await axios.get(`${API_BASE}/api/products/${id}`);
-        const data = res.data;
+      const res = await axios.get(`${API_BASE}/api/products/${id}`);
+      const data = res.data;
 
-        const normalizedOptions =
-          data.options?.length
-            ? data.options
-            : data.variants?.length
-            ? data.variants
-            : [];
+      const normalizedOptions =
+        data.options?.length ? data.options : data.variants || [];
 
-        setProduct({
-          ...data,
-          normalizedOptions,
-        });
-
-        setMainImage(data.images?.[0] || data.img);
-
-        if (normalizedOptions.length > 0) {
-          setSelectedOption(normalizedOptions[0]);
-        }
-      } catch (err) {
-        console.error("Failed to fetch product:", err);
-      }
+      setProduct({ ...data, normalizedOptions });
+      setMainImage(data.images?.[0] || data.img);
+      if (normalizedOptions.length) setSelectedOption(normalizedOptions[0]);
     };
 
     fetchProduct();
   }, [id]);
 
-  // ================= MARKETING =================
-const SALE_DURATION = 10 * 60 * 60 * 1000;
-
+  const SALE_DURATION = 10 * 60 * 60 * 1000;
 
   const getMarketingStats = (pid) => {
     const key = `marketing_${pid}`;
@@ -84,34 +55,23 @@ const SALE_DURATION = 10 * 60 * 60 * 1000;
       reviews: Math.floor(Math.random() * 40) + 20,
       watching: Math.floor(Math.random() * 30) + 10,
       sold: Math.floor(Math.random() * 120) + 30,
-      discount: 40,
     };
 
     localStorage.setItem(key, JSON.stringify(data));
     return data;
   };
 
-  const getSaleEndTime = (pid) => {
-  const key = `sale_end_${pid}`;
-  const now = Date.now();
-
-  const end = now + SALE_DURATION;
-  localStorage.setItem(key, end);
-  return end;
-};
-
-
   useEffect(() => {
     if (!product) return;
 
     setMarketing(getMarketingStats(product._id));
-    const endTime = getSaleEndTime(product._id);
+    const end = Date.now() + SALE_DURATION;
 
     const timer = setInterval(() => {
-      const diff = endTime - Date.now();
+      const diff = end - Date.now();
       setTimeLeft({
-        hours: Math.max(0, Math.floor(diff / (1000 * 60 * 60))),
-        mins: Math.max(0, Math.floor((diff / (1000 * 60)) % 60)),
+        hours: Math.max(0, Math.floor(diff / 3600000)),
+        mins: Math.max(0, Math.floor((diff / 60000) % 60)),
         secs: Math.max(0, Math.floor((diff / 1000) % 60)),
       });
     }, 1000);
@@ -121,54 +81,10 @@ const SALE_DURATION = 10 * 60 * 60 * 1000;
 
   if (!product) return <p>Loading product...</p>;
 
-  // ================= PRICE =================
   const REAL_PRICE = selectedOption ? selectedOption.price : product.price;
-const DISCOUNT_PERCENT = 40;
-const OLD_PRICE = Math.round(REAL_PRICE / (1 - DISCOUNT_PERCENT / 100));
+  const OLD_PRICE = Math.round(REAL_PRICE / 0.6);
 
-
-  // ================= AUTH =================
-  const checkUserLogin = () => {
-    const user = getStoredUser();
-    if (!user) {
-      setShowSideMsg(true);
-      setTimeout(() => {
-        setShowSideMsg(false);
-        navigate("/auth");
-      }, 1500);
-      return null;
-    }
-    return user;
-  };
-
-
-  const handleBuyNow = () => {
-  const user = checkUserLogin();
-  if (!user) return;
-
-  const buyNowItem = {
-    id: product._id,
-    title: product.title,
-    img: mainImage,
-    price: REAL_PRICE,
-    selectedOption,
-    quantity,
-  };
-
-  navigate("/buy-now", {
-    state: {
-      items: [buyNowItem],
-      isBuyNow: true,
-    },
-  });
-};
-
-
-  // ================= CART =================
   const handleAddToCart = () => {
-    const user = checkUserLogin();
-    if (!user) return;
-
     const newItem = {
       id: product._id,
       title: product.title,
@@ -178,32 +94,29 @@ const OLD_PRICE = Math.round(REAL_PRICE / (1 - DISCOUNT_PERCENT / 100));
       quantity,
     };
 
-    setCartItems((prev) => {
-      const exists = prev.find(
-        (p) =>
-          p.id === newItem.id &&
-          p.selectedOption?._id === newItem.selectedOption?._id
-      );
-
-    const updated = exists
-  ? prev.map((p) =>
-      p.id === newItem.id &&
-      p.selectedOption?._id === newItem.selectedOption?._id
-        ? { ...p, quantity: p.quantity + quantity }
-        : p
-    )
-  : [...prev, newItem];
-
-
-      localStorage.setItem(
-        `cartItems_${user._id || user.email}`,
-        JSON.stringify(updated)
-      );
-      return updated;
-    });
-
+    const updated = [...cartItems, newItem];
+    setCartItems(updated);
+    localStorage.setItem("cartItems_guest", JSON.stringify(updated));
     navigate("/cart");
   };
+
+  const handleBuyNow = () => {
+    navigate("/buy-now", {
+      state: {
+        items: [
+          {
+            id: product._id,
+            title: product.title,
+            img: mainImage,
+            price: REAL_PRICE,
+            selectedOption,
+            quantity,
+          },
+        ],
+      },
+    });
+  };
+
 
   // ================= UI =================
   return (
@@ -301,11 +214,11 @@ const OLD_PRICE = Math.round(REAL_PRICE / (1 - DISCOUNT_PERCENT / 100));
         </div>
       </div>
 
-      {showSideMsg && (
+      {/* {showSideMsg && (
         <div className="side-msg">
           <p>First create an account to view cart!</p>
         </div>
-      )}
+      )} */}
 
       {/* ===== STYLES (OLD + MARKETING) ===== */}
       <style>{`

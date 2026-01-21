@@ -73,7 +73,7 @@ useEffect(() => {
         <Route path="/buy-now" element={<BuyNow cartItems={cartItems} user={user} />} />
         <Route path="/order-success" element={<OrderSuccess />} />
 
-        <Route path="/auth" element={<Auth setUser={setUser} />} />
+        {/* <Route path="/auth" element={<Auth setUser={setUser} />} /> */}
         {/* <Route
           path="/account"
           element={user ? <Account /> : <Auth setUser={setUser} />}
