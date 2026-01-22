@@ -10,6 +10,8 @@ import {
 } from "react-icons/fi";
 import { BsStarFill, BsEyeFill, BsGraphUpArrow } from "react-icons/bs";
 import axios from "axios";
+import TrendingProducts from "../components/TrendingProducts";
+import ReviewSection from "../components/ReviewSection"
 
 function SingleProduct({ cartItems, setCartItems }) {
   const { id } = useParams();
@@ -121,6 +123,7 @@ function SingleProduct({ cartItems, setCartItems }) {
   // ================= UI =================
   return (
     <>
+   
       <div className="single-container">
         <div className="single-image">
           <img src={mainImage} alt={product.title} />
@@ -416,7 +419,10 @@ function SingleProduct({ cartItems, setCartItems }) {
   .desc {
     text-align: left;
     padding: 0 10px;     `}</style>
+     <TrendingProducts/>
+     <ReviewSection/>
     </>
+   
   );
 };
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import TrendingProducts from "../components/TrendingProducts";
+// import TrendingProducts from "../components/TrendingProducts";
 
 function Product() {
   const [products, setProducts] = useState([]);
@@ -25,7 +25,7 @@ function Product() {
 
   return (
     <>
-    <TrendingProducts/>
+    {/* <TrendingProducts/> */}
       <div className="product-container">
         <h2 className="section-title">All Products</h2>
 
