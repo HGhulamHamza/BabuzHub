@@ -11,7 +11,7 @@ import {
 import { BsStarFill, BsEyeFill, BsGraphUpArrow } from "react-icons/bs";
 import axios from "axios";
 import TrendingProducts from "../components/TrendingProducts";
-import ReviewSection from "../components/ReviewSection"
+import ReviewSection from "../components/ReviewSection";
 
 function SingleProduct({ cartItems, setCartItems }) {
   const { id } = useParams();
@@ -24,25 +24,38 @@ function SingleProduct({ cartItems, setCartItems }) {
 
   const [marketing, setMarketing] = useState(null);
   const [timeLeft, setTimeLeft] = useState({});
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const API_BASE = import.meta.env.VITE_BACKEND_URL;
   const DISCOUNT_PERCENT = 40;
 
-
   useEffect(() => {
     const fetchProduct = async () => {
-      const res = await axios.get(`${API_BASE}/api/products/${id}`);
-      const data = res.data;
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await axios.get(`${API_BASE}/api/products/${id}`);
+        const data = res.data;
 
-      const normalizedOptions =
-        data.options?.length ? data.options : data.variants || [];
+        const normalizedOptions = data.options?.length
+          ? data.options
+          : data.variants || [];
 
-      setProduct({ ...data, normalizedOptions });
-      setMainImage(data.images?.[0] || data.img);
-      if (normalizedOptions.length) setSelectedOption(normalizedOptions[0]);
+        setProduct({ ...data, normalizedOptions });
+        setMainImage(data.images?.[0] || data.img);
+        if (normalizedOptions.length) setSelectedOption(normalizedOptions[0]);
+      } catch (err) {
+        console.error("Error fetching product:", err);
+        setError(
+          "Failed to load product. It might not exist or the server is down.",
+        );
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchProduct();
+    if (id) fetchProduct();
   }, [id]);
 
   const SALE_DURATION = 10 * 60 * 60 * 1000;
@@ -81,7 +94,26 @@ function SingleProduct({ cartItems, setCartItems }) {
     return () => clearInterval(timer);
   }, [product]);
 
-  if (!product) return <p>Loading product...</p>;
+  if (loading)
+    return (
+      <p style={{ textAlign: "center", marginTop: "50px", fontSize: "1.2rem" }}>
+        Loading product...
+      </p>
+    );
+  if (error)
+    return (
+      <p
+        style={{
+          textAlign: "center",
+          marginTop: "50px",
+          color: "red",
+          fontSize: "1.2rem",
+        }}
+      >
+        {error}
+      </p>
+    );
+  if (!product) return null;
 
   const REAL_PRICE = selectedOption ? selectedOption.price : product.price;
   const OLD_PRICE = Math.round(REAL_PRICE / 0.6);
@@ -119,11 +151,9 @@ function SingleProduct({ cartItems, setCartItems }) {
     });
   };
 
-
   // ================= UI =================
   return (
     <>
-   
       <div className="single-container">
         <div className="single-image">
           <img src={mainImage} alt={product.title} />
@@ -131,7 +161,7 @@ function SingleProduct({ cartItems, setCartItems }) {
 
         <div className="single-details">
           <h2>{product.title}</h2>
-              {/* Variants */}
+          {/* Variants */}
           {product.normalizedOptions?.length > 0 && (
             <div className="options">
               {product.normalizedOptions.map((opt) => (
@@ -162,9 +192,8 @@ function SingleProduct({ cartItems, setCartItems }) {
               <span className="old-price">Rs {OLD_PRICE}</span>
               <span className="new-price">Rs {REAL_PRICE}</span>
               <span className="discount">
-  <FiTag /> {DISCOUNT_PERCENT}% OFF
-</span>
-
+                <FiTag /> {DISCOUNT_PERCENT}% OFF
+              </span>
             </div>
           )}
 
@@ -188,13 +217,13 @@ function SingleProduct({ cartItems, setCartItems }) {
             </b>
           </div>
 
-      
-
           <p className="desc">{product.description}</p>
 
           {/* Quantity */}
           <div className="quantity-box">
-            <button onClick={() => setQuantity(quantity > 1 ? quantity - 1 : 1)}>
+            <button
+              onClick={() => setQuantity(quantity > 1 ? quantity - 1 : 1)}
+            >
               <FiMinus />
             </button>
             <span>{quantity}</span>
@@ -209,10 +238,9 @@ function SingleProduct({ cartItems, setCartItems }) {
               <FiShoppingCart /> Add to Cart
             </button>
 
-           <button className="buy-btn" onClick={handleBuyNow}>
-  <FiCreditCard /> Buy Now
-</button>
-
+            <button className="buy-btn" onClick={handleBuyNow}>
+              <FiCreditCard /> Buy Now
+            </button>
           </div>
         </div>
       </div>
@@ -419,12 +447,10 @@ function SingleProduct({ cartItems, setCartItems }) {
   .desc {
     text-align: left;
     padding: 0 10px;     `}</style>
-     <TrendingProducts/>
-     <ReviewSection/>
+      <TrendingProducts />
+      <ReviewSection />
     </>
-   
   );
-};
-
+}
 
 export default SingleProduct;
