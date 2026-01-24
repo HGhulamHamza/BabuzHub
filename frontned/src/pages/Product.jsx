@@ -16,6 +16,16 @@ function Product() {
         setProducts(res.data);
       } catch (err) {
         console.error("Failed to fetch products:", err);
+
+        // Distinguish between network and HTTP errors
+        if (err.code === "ERR_NETWORK") {
+          console.error("🔴 NETWORK ERROR: Backend server may not be running");
+          console.error(`Expected server at: ${API_BASE}`);
+        } else if (err.response) {
+          console.error(
+            `🔴 HTTP ERROR: ${err.response.status} - ${err.response.statusText}`,
+          );
+        }
       } finally {
         setLoading(false); // Stop loader
       }
@@ -25,7 +35,7 @@ function Product() {
 
   return (
     <>
-    {/* <TrendingProducts/> */}
+      {/* <TrendingProducts/> */}
       <div className="product-container">
         <h2 className="section-title">All Products</h2>
 
@@ -39,11 +49,7 @@ function Product() {
           <div className="product-grid">
             {products.map((p) => (
               <div key={p._id} className="product-card">
-                <img
-                  src={p.img}
-                  alt={p.title}
-                  className="product-img"
-                />
+                <img src={p.img} alt={p.title} className="product-img" />
                 <h3 className="product-title">{p.title}</h3>
                 <p className="product-price">Rs {p.price}</p>
                 <Link to={`/product/${p._id}`}>
@@ -162,7 +168,6 @@ function Product() {
           }
         }
       `}</style>
-     
     </>
   );
 }

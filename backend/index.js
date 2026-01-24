@@ -21,7 +21,7 @@ const allowedOrigins = [
   "https://babuz-hub.vercel.app",
   "https://babuz-hub-3u7z.vercel.app",
   process.env.FRONTEND_URL,
-  "http://localhost:5173"
+  "http://localhost:5173",
 ];
 
 app.use(
@@ -38,13 +38,11 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-  })
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
 );
 
-
 app.options(/.*/, cors());
-
 
 // Connect MongoDB
 connectToDB();
