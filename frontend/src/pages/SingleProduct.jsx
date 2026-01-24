@@ -12,6 +12,7 @@ import { BsStarFill, BsEyeFill, BsGraphUpArrow } from "react-icons/bs";
 import axios from "axios";
 import TrendingProducts from "../components/TrendingProducts";
 import ReviewSection from "../components/ReviewSection";
+import Footer from "../components/Footer";
 
 function SingleProduct({ cartItems, setCartItems }) {
   const { id } = useParams();
@@ -449,6 +450,7 @@ function SingleProduct({ cartItems, setCartItems }) {
     padding: 0 10px;     `}</style>
       <TrendingProducts />
       <ReviewSection />
+      <Footer/>
     </>
   );
 }
