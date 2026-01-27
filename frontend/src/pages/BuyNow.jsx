@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { FiShoppingBag, FiCreditCard, FiMapPin, FiHome } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
-const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
+const BuyNow = ({ cartItems, user }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // 🟢 GET PRODUCT FROM BUY NOW BUTTON
+  const buyNowItems = location.state?.items || null;
+
+  // 🟢 DECIDE WHICH ITEMS TO USE
+  const itemsToCheckout =
+    buyNowItems && buyNowItems.length > 0 ? buyNowItems : cartItems;
 
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -18,14 +26,10 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [errors, setErrors] = useState({});
 
-  // // 🔥 AUTH GUARD (SAFE)
-  // useEffect(() => {
-  //   if (!user) navigate("/auth");
-  // }, [user, navigate]);
-
-  // TOTAL CALCULATION
+  // ✅ TOTAL CALCULATION
   useEffect(() => {
-    const totalPrice = cartItems.reduce((sum, item) => {
+    if (!itemsToCheckout) return;
+    const totalPrice = itemsToCheckout.reduce((sum, item) => {
       return (
         sum +
         item.quantity *
@@ -33,7 +37,7 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
       );
     }, 0);
     setTotal(totalPrice);
-  }, [cartItems]);
+  }, [itemsToCheckout]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -44,94 +48,6 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  const emptyStateStyles = `
-.empty-state-wrapper {
-  min-height: 70vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #f9f9f9;
-  padding: 20px;
-}
-
-.empty-state-box {
-  background: #fff;
-  padding: 40px 35px;
-  border-radius: 18px;
-  text-align: center;
-  max-width: 420px;
-  width: 100%;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
-  animation: fadeUp 0.4s ease;
-}
-
-.empty-icon {
-  font-size: 52px;
-  color: #00a9a5;
-  margin-bottom: 15px;
-}
-
-.empty-state-box h2 {
-  font-size: 22px;
-  margin-bottom: 8px;
-  color: #222;
-}
-
-.empty-state-box p {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 22px;
-}
-
-.empty-state-box button {
-  background: linear-gradient(135deg, #00a9a5, #00c9c4);
-  color: #fff;
-  border: none;
-  padding: 14px 36px;
-  border-radius: 30px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 18px rgba(0,169,165,0.35);
-}
-
-.empty-state-box button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(0,169,165,0.45);
-}
-
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 📱 Mobile */
-@media (max-width: 600px) {
-  .empty-state-box {
-    padding: 30px 22px;
-  }
-
-  .empty-icon {
-    font-size: 44px;
-  }
-
-  .empty-state-box h2 {
-    font-size: 20px;
-  }
-
-  .empty-state-box button {
-    width: 100%;
-    padding: 14px;
-  }
-}
-`;
 
   const handlePlaceOrder = async () => {
     if (!validateForm()) return;
@@ -145,9 +61,9 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userDetails: formData,
-            cartItems,
+            items: itemsToCheckout, // ✅ FIXED
             total,
-            user, // 🔥 optional but useful
+            user,
           }),
         }
       );
@@ -155,7 +71,7 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
       if (response.ok) {
         alert("✅ Order placed successfully!");
         navigate("/order-success", {
-          state: { userDetails: formData, cartItems, total },
+          state: { userDetails: formData, items: itemsToCheckout, total },
         });
       } else {
         alert("❌ Failed to place order.");
@@ -168,24 +84,23 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
     }
   };
 
- if (!cartItems || cartItems.length === 0) {
-  return (
-    <div className="empty-state-wrapper">
-      <div className="empty-state-box">
-        <FiShoppingBag className="empty-icon" />
-        <h2>No items in your cart</h2>
-        <p>Add products before proceeding to checkout.</p>
-        <button onClick={() => navigate("/product")}>
-          Continue Shopping
-        </button>
+  // ✅ EMPTY STATE FIXED
+  if (!itemsToCheckout || itemsToCheckout.length === 0) {
+    return (
+      <div className="empty-state-wrapper">
+        <div className="empty-state-box">
+          <FiShoppingBag className="empty-icon" />
+          <h2>No items selected</h2>
+          <p>Please select a product before checkout.</p>
+          <button onClick={() => navigate("/product")}>
+            Continue Shopping
+          </button>
+        </div>
+
+        <style>{emptyStateStyles}</style>
       </div>
-
-      <style>{emptyStateStyles}</style>
-    </div>
-  );
-}
-
-
+    );
+  }
 
   return (
     <div className="checkout-container">
@@ -194,7 +109,6 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
       </h2>
 
       <div className="checkout-content">
-        {/* LEFT SIDE */}
         <div className="checkout-left">
           <div className="checkout-section">
             <h3><FiMapPin /> Customer Details</h3>
@@ -209,9 +123,7 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
                     setFormData({ ...formData, [field]: e.target.value })
                   }
                 />
-                {errors[field] && (
-                  <p className="error">{errors[field]}</p>
-                )}
+                {errors[field] && <p className="error">{errors[field]}</p>}
               </div>
             ))}
 
@@ -223,9 +135,7 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
                   setFormData({ ...formData, address: e.target.value })
                 }
               />
-              {errors.address && (
-                <p className="error">{errors.address}</p>
-              )}
+              {errors.address && <p className="error">{errors.address}</p>}
             </div>
           </div>
 
@@ -267,11 +177,10 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
           </div>
         </div>
 
-        {/* RIGHT SIDE */}
         <div className="checkout-right">
           <h3>Order Summary</h3>
 
-          {cartItems.map((item) => (
+          {itemsToCheckout.map((item) => (
             <div key={item.id} className="order-item">
               <img src={item.img} alt={item.title} />
               <div>
@@ -297,7 +206,8 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
           </button>
         </div>
       </div>
-       <style>{`
+
+    <style>{`
         .checkout-container {
           padding: 60px 90px;
           font-family: "Poppins", sans-serif;
@@ -466,9 +376,98 @@ const BuyNow = ({ cartItems, user }) => { // 🔥 CHANGED
           }
         }
       `}</style>
-      
     </div>
   );
 };
+
+const emptyStateStyles = `
+            .empty-state-wrapper {
+  min-height: 70vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f9f9f9;
+  padding: 20px;
+}
+
+.empty-state-box {
+  background: #fff;
+  padding: 40px 35px;
+  border-radius: 18px;
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+  animation: fadeUp 0.4s ease;
+}
+
+.empty-icon {
+  font-size: 52px;
+  color: #00a9a5;
+  margin-bottom: 15px;
+}
+
+.empty-state-box h2 {
+  font-size: 22px;
+  margin-bottom: 8px;
+  color: #222;
+}
+
+.empty-state-box p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 22px;
+}
+
+.empty-state-box button {
+  background: linear-gradient(135deg, #00a9a5, #00c9c4);
+  color: #fff;
+  border: none;
+  padding: 14px 36px;
+  border-radius: 30px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 18px rgba(0,169,165,0.35);
+}
+
+.empty-state-box button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(0,169,165,0.45);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 📱 Mobile */
+@media (max-width: 600px) {
+  .empty-state-box {
+    padding: 30px 22px;
+  }
+
+  .empty-icon {
+    font-size: 44px;
+  }
+
+  .empty-state-box h2 {
+    font-size: 20px;
+  }
+
+  .empty-state-box button {
+    width: 100%;
+    padding: 14px;
+  }
+}
+
+`;
 
 export default BuyNow;

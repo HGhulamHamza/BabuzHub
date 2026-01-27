@@ -3,7 +3,7 @@ import Product from "../../models/Product.js";
 
 const router = express.Router();
 
-// Add new product
+// Add single product
 router.post("/", async (req, res) => {
   try {
     const product = new Product(req.body);
@@ -11,6 +11,16 @@ router.post("/", async (req, res) => {
     res.status(201).json({ message: "Product added successfully", product });
   } catch (err) {
     res.status(500).json({ message: "Failed to add product", error: err.message });
+  }
+});
+
+// Add multiple products ✅ FIXED
+router.post("/bulk", async (req, res) => {
+  try {
+    const products = await Product.insertMany(req.body);
+    res.status(201).json({ message: "Products added successfully", products });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to add products", error: err.message });
   }
 });
 
@@ -24,7 +34,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get single product by ID
+// Get single product
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -35,7 +45,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Update product by ID
+// Update product
 router.put("/:id", async (req, res) => {
   try {
     const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -45,7 +55,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// Delete product by ID
+// Delete product
 router.delete("/:id", async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);
@@ -55,7 +65,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// 🔹 Delete ALL products
+// Delete ALL products
 router.delete("/", async (req, res) => {
   try {
     await Product.deleteMany({});
@@ -63,18 +73,6 @@ router.delete("/", async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Failed to delete all products", error: err.message });
   }
-
-
-  // Add multiple products
-router.post("/bulk", async (req, res) => {
-  try {
-    const products = await Product.insertMany(req.body);
-    res.status(201).json({ message: "Products added successfully", products });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to add products", error: err.message });
-  }
-});
-
 });
 
 export default router;
