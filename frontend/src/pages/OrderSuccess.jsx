@@ -35,11 +35,11 @@ const OrderSuccess = () => {
                         {" "} - {item.selectedSize}
                       </span>
                     )}
-                    {item.selectedOption && (
+                    {/* {item.selectedOption && (
                       <span className="variant-text">
                         {" "}({item.selectedOption.name})
                       </span>
-                    )}
+                    )} */}
                   </p>
                   <p>Qty: {item.quantity}</p>
                   <p>
