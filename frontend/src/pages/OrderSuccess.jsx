@@ -1,11 +1,14 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FiCheckCircle, FiMail } from "react-icons/fi";
+import { FiCheckCircle } from "react-icons/fi";
 
 const OrderSuccess = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { userDetails, cartItems, total } = location.state || {};
+
+  // ✅ SUPPORT BOTH FLOWS
+  const { userDetails, cartItems, items, total } = location.state || {};
+  const products = cartItems || items || [];
 
   return (
     <div className="success-container">
@@ -14,19 +17,43 @@ const OrderSuccess = () => {
         <h2>Order Placed Successfully!</h2>
         <p>
           Thank you <strong>{userDetails?.name}</strong>! Your order details have
-          been sent to <strong>moizkhanal82@gmail.com</strong>
+          been sent successfully.
         </p>
 
         <div className="order-info">
           <h3>Order Summary</h3>
-          {cartItems?.map((item) => (
-            <div key={item.id} className="order-item">
-              <img src={item.img} alt={item.title} />
-              <p>
-                {item.title} × {item.quantity}
-              </p>
-            </div>
-          ))}
+
+          {products.length > 0 ? (
+            products.map((item, index) => (
+              <div key={index} className="order-item">
+                <img src={item.img} alt={item.title} />
+                <div>
+                  <p>
+                    {item.title}
+                    {item.selectedSize && (
+                      <span className="variant-text">
+                        {" "} - {item.selectedSize}
+                      </span>
+                    )}
+                    {item.selectedOption && (
+                      <span className="variant-text">
+                        {" "}({item.selectedOption.name})
+                      </span>
+                    )}
+                  </p>
+                  <p>Qty: {item.quantity}</p>
+                  <p>
+                    Rs{" "}
+                    {(item.selectedOption?.price || item.price) *
+                      item.quantity}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No items found.</p>
+          )}
+
           <h4>Total: Rs {total}</h4>
         </div>
 
@@ -68,11 +95,16 @@ const OrderSuccess = () => {
           align-items: center;
           gap: 10px;
           font-size: 15px;
-          margin: 5px 0;
+          margin: 8px 0;
         }
         .order-item img {
           width: 50px;
           border-radius: 8px;
+        }
+        .variant-text {
+          font-size: 13px;
+          color: #666;
+          font-weight: 500;
         }
         .continue-btn {
           margin-top: 20px;
