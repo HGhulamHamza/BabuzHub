@@ -169,7 +169,15 @@ const removeAll = () => {
                   <img src={item.img} alt={item.title} />
                 </td>
                 <td className="product-info">
-                  <h4>{item.title}</h4>
+                 <h4>
+  {item.title}
+  {item.selectedSize && (
+    <span className="variant-text"> - {item.selectedSize}</span>
+  )}
+  
+
+</h4>
+
                 </td>
                 <td className="price">
                   Rs {item.price * item.quantity}
@@ -376,6 +384,12 @@ const removeAll = () => {
   box-shadow: 0 8px 20px rgba(0, 169, 165, 0.35);
   transition: 0.3s ease;
 }
+  .variant-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+}
+
 
 .pay-btn:hover {
   transform: translateY(-2px);

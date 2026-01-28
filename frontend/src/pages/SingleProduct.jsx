@@ -22,6 +22,8 @@ function SingleProduct({ cartItems, setCartItems }) {
   const [quantity, setQuantity] = useState(1);
   const [selectedOption, setSelectedOption] = useState(null);
   const [mainImage, setMainImage] = useState("");
+  const [selectedSize, setSelectedSize] = useState(null);
+
 
   const [marketing, setMarketing] = useState(null);
   const [timeLeft, setTimeLeft] = useState({});
@@ -42,6 +44,12 @@ function SingleProduct({ cartItems, setCartItems }) {
         const normalizedOptions = data.options?.length
           ? data.options
           : data.variants || [];
+          setProduct({ ...data, normalizedOptions });
+
+if (data.sizes?.length) {
+  setSelectedSize(data.sizes[0]);
+}
+
 
         setProduct({ ...data, normalizedOptions });
         setMainImage(data.images?.[0] || data.img);
@@ -126,6 +134,7 @@ function SingleProduct({ cartItems, setCartItems }) {
       img: mainImage,
       price: REAL_PRICE,
       selectedOption,
+      selectedSize,
       quantity,
     };
 
@@ -145,6 +154,7 @@ function SingleProduct({ cartItems, setCartItems }) {
             img: mainImage,
             price: REAL_PRICE,
             selectedOption,
+            selectedSize,
             quantity,
           },
         ],
@@ -178,6 +188,24 @@ function SingleProduct({ cartItems, setCartItems }) {
               ))}
             </div>
           )}
+          {/* Sizes */}
+{product.sizes?.length > 0 && (
+  <div className="sizes">
+    <h4>Select Size:</h4>
+    <div className="size-options">
+      {product.sizes.map((size, i) => (
+        <button
+          key={i}
+          className={`size-btn ${selectedSize === size ? "active" : ""}`}
+          onClick={() => setSelectedSize(size)}
+        >
+          {size}
+        </button>
+      ))}
+    </div>
+  </div>
+)}
+
 
           {/* ⭐ Rating */}
           {marketing && (
@@ -398,6 +426,37 @@ function SingleProduct({ cartItems, setCartItems }) {
         .buy-btn:hover {
           background: #000;
         }
+          .sizes {
+  margin: 15px 0;
+}
+
+.size-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.size-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.25s;
+}
+
+.size-btn:hover {
+  border-color: #00a9a5;
+  color: #00a9a5;
+}
+
+.size-btn.active {
+  background: #00a9a5;
+  color: white;
+  border-color: #00a9a5;
+}
+
 
 @media (max-width: 768px) {
   .single-container {

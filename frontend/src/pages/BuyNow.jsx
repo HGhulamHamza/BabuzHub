@@ -184,7 +184,15 @@ const BuyNow = ({ cartItems, user }) => {
             <div key={item.id} className="order-item">
               <img src={item.img} alt={item.title} />
               <div>
-                <p>{item.title}</p>
+              <p>
+  {item.title}
+  {item.selectedSize && (
+    <span className="variant-text"> - {item.selectedSize}</span>
+  )}
+
+  
+</p>
+
                 <p>Qty: {item.quantity}</p>
                 <p>
                   Rs{" "}
@@ -366,6 +374,12 @@ const BuyNow = ({ cartItems, user }) => {
           border-radius: 8px;
           cursor: pointer;
         }
+          .variant-text {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
 
         @media (max-width: 900px) {
           .checkout-content {
