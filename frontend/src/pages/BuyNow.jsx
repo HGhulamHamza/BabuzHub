@@ -61,7 +61,7 @@ const BuyNow = ({ cartItems, user }) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userDetails: formData,
-            items: itemsToCheckout, // ✅ FIXED
+            cartItems: itemsToCheckout, // ✅ FIXED
             total,
             user,
           }),
