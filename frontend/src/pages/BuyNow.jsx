@@ -142,7 +142,7 @@ const BuyNow = ({ cartItems, user }) => {
           <div className="checkout-section">
             <h3><FiHome /> Store Address</h3>
             <p className="fixed-address">
-              44/216, Darkhshan Society, Kalaboard, Malir
+             216 Nissa Street Malir Halt Karachi
             </p>
           </div>
 

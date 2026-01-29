@@ -10,6 +10,7 @@ import Auth from "./components/Auth";
 import Cart from "./pages/Cart";
 import BuyNow from "./pages/BuyNow";
 import OrderSuccess from "./pages/OrderSuccess";
+import WhatsAppButton from "./components/WhatsappIcon";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -72,7 +73,7 @@ useEffect(() => {
         <Route path="/product" element={<Product />} />
         <Route path="/buy-now" element={<BuyNow cartItems={cartItems} user={user} />} />
         <Route path="/order-success" element={<OrderSuccess />} />
-
+          
         {/* <Route path="/auth" element={<Auth setUser={setUser} />} /> */}
         {/* <Route
           path="/account"
@@ -89,6 +90,7 @@ useEffect(() => {
           }
         />
       </Routes>
+      <WhatsAppButton/>
     </Router>
   );
 }
