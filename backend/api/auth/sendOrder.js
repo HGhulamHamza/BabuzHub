@@ -18,15 +18,26 @@ router.post("/", async (req, res) => {
         pass: process.env.EMAIL_PASS,
       },
     });
+const itemsHTML = cartItems
+  .map((item) => {
+    const sizeText = item.selectedSize ? `Size: ${item.selectedSize}` : "";
+    const optionText = item.selectedOption?.name
+      ? ` | ${item.selectedOption.name}`
+      : "";
 
-    const itemsHTML = cartItems
-      .map(
-        (item) =>
-          `<li>${item.title} (${item.selectedOption?.name || ""}) — ${item.quantity} × Rs ${
-            item.selectedOption ? item.selectedOption.price : item.price
-          }</li>`
-      )
-      .join("");
+    const price = item.selectedOption?.price || item.price;
+
+    return `
+      <li style="margin-bottom:8px;">
+        <strong>${item.title}</strong><br/>
+        ${sizeText} ${optionText}<br/>
+        Quantity: ${item.quantity}<br/>
+        Price: Rs ${price}
+      </li>
+    `;
+  })
+  .join("");
+
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
